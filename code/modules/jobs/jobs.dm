@@ -196,6 +196,15 @@ GLOBAL_LIST_INIT(wasteland_positions, list(
 	"Far-Lands Tribals",
 ))
 
+GLOBAL_LIST_INIT(mass_fusion_positions, list(
+	"Mass Fusion Supervisor",
+	"Mass Fusion Scavenger",
+	"Mass Fusion Reactor Operator",
+	"Mass Fusion Grid Technician",
+	"Mass Fusion Relay Engineer",
+	"Mass Fusion Hazard Recovery Tech",
+))
+
 GLOBAL_LIST_INIT(outlaw_positions, list(
 	"Outlaw"
 ))
@@ -288,6 +297,7 @@ GLOBAL_LIST_INIT(position_categories, list(
 	EXP_TYPE_ENCLAVE = list("jobs" = enclave_positions, "color" = "#323232"),
 	EXP_TYPE_KHAN = list("jobs" = khan_positions, "color" = "#006666"),
 	"Eastwood" = list("jobs" = eastwood_positions, "color" = "#d7b088"),
+	"Mass Fusion" = list("jobs" = mass_fusion_positions, "color" = "#8da86e"),
 	EXP_TYPE_SILICON = list("jobs" = silicon_positions, "color" = "#4a4a4a"),
 	EXP_TYPE_TRIBAL = list("jobs" = tribal_positions, "color" = "#006666"),
 	//EXP_TYPE_BIKER = list("jobs" = biker_positions, "color" = "#eb872f"),
@@ -309,7 +319,7 @@ GLOBAL_LIST_INIT(exp_jobsmap, list(
 	EXP_TYPE_SILICON = list("titles" = list("AI","Cyborg")),
 	EXP_TYPE_SERVICE = list("titles" = civilian_positions),
 
-	EXP_TYPE_FALLOUT = list("titles" = brotherhood_positions | eastwood_positions | legion_positions | ncr_positions | vault_positions | wasteland_positions | tribal_positions | followers_positions | enclave_positions),
+	EXP_TYPE_FALLOUT = list("titles" = brotherhood_positions | eastwood_positions | legion_positions | ncr_positions | vault_positions | wasteland_positions | mass_fusion_positions | tribal_positions | followers_positions | enclave_positions),
 
 	EXP_TYPE_OUTLAW = list("titles" = list("Outlaw","Den Mob Boss","Den Mob Enforcer","Den Doctor",)),
 	EXP_TYPE_BROTHERHOOD = list("titles" = brotherhood_positions),
@@ -317,7 +327,7 @@ GLOBAL_LIST_INIT(exp_jobsmap, list(
 	EXP_TYPE_LEGION = list("titles" = legion_positions),
 	EXP_TYPE_NCR = list("titles" = ncr_positions),
 	EXP_TYPE_VAULT = list("titles" = vault_positions),
-	EXP_TYPE_WASTELAND = list("titles" = wasteland_positions),
+	EXP_TYPE_WASTELAND = list("titles" = wasteland_positions | mass_fusion_positions),
 	EXP_TYPE_KHAN = list("titles" = khan_positions),
 	//EXP_TYPE_FOLLOWERS = list("titles" = followers_positions),
 	EXP_TYPE_ENCLAVE = list("titles" = enclave_positions),

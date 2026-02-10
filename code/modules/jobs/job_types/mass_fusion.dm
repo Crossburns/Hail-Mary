@@ -148,8 +148,8 @@ Small specialist faction focused on reactor operations and field salvage.
 /datum/job/mass_fusion/grid_technician
 	title = "Mass Fusion Grid Technician"
 	flag = F13MASSFUSIONGRIDTECH
-	total_positions = 2
-	spawn_positions = 2
+	total_positions = 1
+	spawn_positions = 1
 	supervisors = "the Mass Fusion Supervisor"
 	description = "You maintain turbines, pumps, instrumentation, and breaker systems."
 	enforces = "Prevent wear cascades, complete maintenance queue tasks, and keep diagnostics clean."
@@ -216,8 +216,8 @@ Small specialist faction focused on reactor operations and field salvage.
 /datum/job/mass_fusion/hazard_recovery
 	title = "Mass Fusion Hazard Recovery Tech"
 	flag = F13MASSFUSIONHAZREC
-	total_positions = 1
-	spawn_positions = 1
+	total_positions = 2
+	spawn_positions = 2
 	supervisors = "the Mass Fusion Supervisor"
 	description = "You handle spent fuel cask logistics and hazard-zone extraction operations."
 	enforces = "Keep waste hazard under control and recover high-value materials from danger windows."
