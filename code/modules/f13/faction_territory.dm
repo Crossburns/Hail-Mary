@@ -4,7 +4,7 @@
 /obj/machinery/f13/faction_capture_node
 	name = "district relay node"
 	desc = "Use this to claim a district for your faction and link a nearby resource pad."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/antimatter.dmi'
 	icon_state = "control_on"
 	density = TRUE
 
@@ -224,7 +224,7 @@
 	parent_type = /obj/machinery/f13/faction_locked
 	name = "faction resource pad"
 	desc = "A district-owned pad that periodically manufactures field supplies."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/teleporter.dmi'
 	icon_state = "tele-o"
 	require_district_owner = TRUE
 
@@ -343,7 +343,7 @@
 /obj/machinery/f13/faction_water_purifier
 	name = "water rights purifier node"
 	desc = "A capturable purifier node that feeds district water utilities."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/antimatter.dmi'
 	icon_state = "control_on"
 	density = TRUE
 
@@ -411,7 +411,7 @@
 /obj/machinery/f13/faction_intel_tower
 	name = "intel relay tower"
 	desc = "Capturable signal node for reconnaissance and counter-intel actions."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/antimatter.dmi'
 	icon_state = "control_off"
 	density = TRUE
 
@@ -530,7 +530,7 @@
 /obj/structure/f13/faction_district_buildable_marker
 	name = "district doctrine structure"
 	desc = "A faction doctrine deployment that modifies district operations."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/antimatter.dmi'
 	icon_state = "control_on"
 	density = TRUE
 	anchored = TRUE
@@ -554,7 +554,7 @@
 /obj/structure/f13/faction_caravan_marker
 	name = "faction supply convoy"
 	desc = "A moving convoy carrying district cargo."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/storage.dmi'
 	icon_state = "crate"
 	density = TRUE
 	anchored = FALSE

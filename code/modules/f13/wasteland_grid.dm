@@ -763,7 +763,7 @@ proc/_wasteland_grid_bootstrap_districts()
 /datum/grid_task/proc/describe()
 	var/t = "[name] (S[severity])"
 	if(completed) t += " [span_notice("(done)")]"
-	if(desc) t += " — [desc]"
+	if(desc) t += " â€” [desc]"
 	return t
 
 /proc/grid_task_add(id, name, desc, severity, expires_in, target_tag, target_type, required_tool, list/reqs, list/steps)
@@ -2717,7 +2717,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/item/f13/grid_fuel
 	name = "fuel rod"
 	desc = "A heavy sealed fuel rod. Feeds the Mass Fusion plant."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/antimatter.dmi'
 	icon_state = "jar"
 	w_class = WEIGHT_CLASS_BULKY
 	var/fuel_value = 25
@@ -2725,7 +2725,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/item/f13/grid_coolant
 	name = "coolant canister"
 	desc = "A pressurized coolant canister."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/antimatter.dmi'
 	icon_state = "box"
 	w_class = WEIGHT_CLASS_BULKY
 	var/coolant_value = 25
@@ -2857,7 +2857,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 
 /obj/structure/wasteland_grid/repair_point
 	name = "grid repair point"
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/Reactor_32x32.dmi'
 	icon_state = "Breaker_cabinet_closed"
 	anchored = TRUE
 	density = TRUE
@@ -3014,7 +3014,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/wasteland_grid/repair_point
 	name = "coolant pump station"
 	desc = "A pump manifold with valves and pressure gauges."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "Primary_pump"
 	pixel_x = -32
 	pixel_y = -32
@@ -3026,7 +3026,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/wasteland_grid/repair_point
 	name = "control bus rack"
 	desc = "A tangled rack of control cables and relays."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/telecomms.dmi'
 	icon_state = "comm_server_o"
 	repair_key = "control"
 
@@ -3036,7 +3036,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/grid_radiation_source
 	name = "mass fusion reactor core"
 	desc = "The reactor core housing. It hums when the grid is online."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/128x128_reactor.dmi'
 	icon_state = "Reactor_off"
 	anchored = TRUE
 	density = TRUE
@@ -3126,7 +3126,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "valve"
 	desc = "A manual valve with a crusty handwheel."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "coolant valve"
 	pixel_x = -32
 	pixel_y = -32
@@ -3172,7 +3172,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/grid/pump
 	name = "grid pump"
 	desc = "A heavy pump. Sounds like it wants lubrication."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "Main_Primary_Pump"
 	pixel_x = -32
 	pixel_y = -32
@@ -3273,7 +3273,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "relief valve"
 	desc = "A safety relief valve. Lift test it or it will betray you."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "Relief_valve"
 	pixel_x = -32
 	pixel_y = -32
@@ -3342,7 +3342,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "filter unit"
 	desc = "A coolant filter skid. Ignore it and your coolant turns to soup."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "Filter_unit"
 	pixel_x = -32
 	pixel_y = -32
@@ -3404,7 +3404,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "heat exchanger"
 	desc = "A battered exchanger. Descale it or steam quality drops."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "Heat_exchanger"
 	pixel_x = -32
 	pixel_y = -32
@@ -3454,7 +3454,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "turbine assembly"
 	desc = "The main steam turbine train. It needs regular mechanical service."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "Turbine_main"
 	pixel_x = -32
 	pixel_y = -32
@@ -3591,7 +3591,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/grid/turbine_controller
 	name = "turbine controller"
 	desc = "Sets load and bypass. Overspeed this and it'll trip."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	anchored = TRUE
 	density = TRUE
@@ -3758,7 +3758,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "instrumentation panel"
 	desc = "Calibration bay. Drift lives here."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/machines/telecomms.dmi'
 	icon_state = "comm_server_o"
 
 /obj/structure/grid/sensor_panel/examine(mob/user)
@@ -3806,7 +3806,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "district power relay"
 	desc = "A high-voltage relay node feeding one faction district. Sabotage this to hard-cut that district."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	var/district = null
 	max_integrity = 100
@@ -3911,7 +3911,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "relay tower"
 	desc = "A tall transmission tower from the old world. Decorative, but imposing."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/Relay_Tower.dmi'
 	density = TRUE
 	anchored = TRUE
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
@@ -3919,7 +3919,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/west_tek_turbine
 	name = "west tek turbine stack"
 	desc = "A pre-war West Tek turbine stack in rough shape. The housing is seized, the service ports are rusted, and it clearly needs work."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x320_deco.dmi'
 	icon_state = ""
 	anchored = TRUE
 	density = TRUE
@@ -3931,7 +3931,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/turbine_deco
 	name = "turbine"
 	desc = "A large industrial turbine from the old world."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x320_deco.dmi'
 	icon_state = "Turbine_deco"
 	anchored = TRUE
 	density = TRUE
@@ -3943,7 +3943,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/west_tek_floor_sign
 	name = "west tek floor sign"
 	desc = "A faded West Tek floor marking from before the bombs."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "West_tek_sign"
 	anchored = TRUE
 	density = FALSE
@@ -3961,7 +3961,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/large_vent
 	name = "large vent"
 	desc = "A large industrial ventilation unit from before the war."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x32_vents.dmi'
 	icon_state = "Large_vent"
 	anchored = TRUE
 	density = FALSE
@@ -3973,7 +3973,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/floor_vent1
 	name = "floor vent"
 	desc = "A small floor vent grate."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/32x32_floor.dmi'
 	icon_state = "Vent1"
 	anchored = TRUE
 	density = FALSE
@@ -3984,7 +3984,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/floor_vent2
 	name = "floor vent"
 	desc = "A small floor vent grate."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/32x32_floor.dmi'
 	icon_state = "vent2"
 	anchored = TRUE
 	density = FALSE
@@ -3995,7 +3995,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/floor_vent3
 	name = "floor vent"
 	desc = "A small floor vent grate."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/32x32_floor.dmi'
 	icon_state = "vent3"
 	anchored = TRUE
 	density = FALSE
@@ -4006,7 +4006,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/floor_vent4
 	name = "floor vent"
 	desc = "A small floor vent grate."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/32x32_floor.dmi'
 	icon_state = "vent4"
 	anchored = TRUE
 	density = FALSE
@@ -4017,7 +4017,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/giant_footstep
 	name = "giant footstep"
 	desc = "A massive footprint pressed deep into the earth. Whatever made this was enormous."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_sprites.dmi'
 	icon_state = "Giant_footstep"
 	anchored = TRUE
 	density = FALSE
@@ -4031,7 +4031,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/crashed_vertibird
 	name = "crashed vertibird"
 	desc = "The burnt-out husk of a pre-war Vertibird. It won't be flying again."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/256x192_sprites.dmi'
 	icon_state = "Crashed_vertibird"
 	anchored = TRUE
 	density = TRUE
@@ -4043,7 +4043,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/road_gate
 	name = "road gate"
 	desc = "A heavy barricade gate meant to block vehicle traffic."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/160x32_sprites.dmi'
 	icon_state = "RoadGate"
 	anchored = TRUE
 	density = TRUE
@@ -4055,7 +4055,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb1
 	name = "large rock"
 	desc = "A massive boulder blocking the way."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb1"
 	anchored = TRUE
 	density = TRUE
@@ -4067,7 +4067,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb2
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb2"
 	anchored = TRUE
 	density = FALSE
@@ -4079,7 +4079,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb3
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb3"
 	anchored = TRUE
 	density = FALSE
@@ -4091,7 +4091,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb4
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb4"
 	anchored = TRUE
 	density = FALSE
@@ -4103,7 +4103,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb5
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb5"
 	anchored = TRUE
 	density = FALSE
@@ -4115,7 +4115,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb6
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb6"
 	anchored = TRUE
 	density = FALSE
@@ -4127,7 +4127,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb7
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb7"
 	anchored = TRUE
 	density = FALSE
@@ -4139,7 +4139,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_rb8
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/128x128_rock_sprites.dmi'
 	icon_state = "rb8"
 	anchored = TRUE
 	density = FALSE
@@ -4151,7 +4151,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_r1
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_rock_sprites.dmi'
 	icon_state = "R1"
 	anchored = TRUE
 	density = FALSE
@@ -4163,7 +4163,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_r2
 	name = "large rock"
 	desc = "A massive boulder blocking the way."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_rock_sprites.dmi'
 	icon_state = "R2"
 	anchored = TRUE
 	density = TRUE
@@ -4175,7 +4175,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_r3
 	name = "rock formation"
 	desc = "A cluster of weathered rocks."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_rock_sprites.dmi'
 	icon_state = "R3"
 	anchored = TRUE
 	density = FALSE
@@ -4187,7 +4187,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_r4
 	name = "large rock"
 	desc = "A massive boulder blocking the way."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_rock_sprites.dmi'
 	icon_state = "R4"
 	anchored = TRUE
 	density = TRUE
@@ -4199,7 +4199,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_r5
 	name = "large rock"
 	desc = "A massive boulder blocking the way."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_rock_sprites.dmi'
 	icon_state = "R5"
 	anchored = TRUE
 	density = TRUE
@@ -4211,7 +4211,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/rock_r6
 	name = "large rock"
 	desc = "A massive boulder blocking the way."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_rock_sprites.dmi'
 	icon_state = "R7"
 	anchored = TRUE
 	density = TRUE
@@ -4223,7 +4223,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/fev_pod
 	name = "West Tek FEV pod"
 	desc = "An old containment pod once used for FEV processing. It looks inactive."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "FEV_pod"
 	anchored = TRUE
 	density = FALSE
@@ -4235,7 +4235,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/west_tek_billboard
 	name = "West Tek billboard"
 	desc = "A battered pre-war West Tek billboard."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/224x128_billboards.dmi'
 	
 	icon_state = "WestTek_billboard"
 	anchored = TRUE
@@ -4248,7 +4248,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/server_deco
 	name = "high-power server"
 	desc = "A high-power server rack from the old world, still humming with pre-war guts."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_sprites.dmi'
 	icon_state = "Server_deco"
 	anchored = TRUE
 	density = FALSE
@@ -4260,7 +4260,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/wasteland_grid/power_armor_holder
 	name = "power armor holder"
 	desc = "A reinforced equipment cradle for parking a power armor chassis."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_sprites.dmi'
 	icon_state = "PA_holder_empty"
 	
 	anchored = TRUE
@@ -4322,7 +4322,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/invisible_blocker
 	name = ""
 	desc = ""
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/effects/effects.dmi'
 	icon_state = "nothing"
 	anchored = TRUE
 	density = TRUE
@@ -4337,7 +4337,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/fev_vat
 	name = "West Tek FEV vat"
 	desc = "A pre-war FEV immersion vat. The glass is stained and the slurry still bubbles."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/160x128_FEV_VAT.dmi'
 	icon_state = "FEV_VAT"
 	anchored = TRUE
 	density = FALSE
@@ -4672,7 +4672,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "district backup generator"
 	desc = "A uranium-hungry emergency generator that can keep one district powered if the main grid drops."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/64x64_machinery.dmi'
 	icon_state = "generator_off"
 	pixel_x = -16
 	pixel_y = -16
@@ -4807,7 +4807,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "relay breaker box"
 	desc = "Local isolation breaker for a district relay."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/Reactor_32x32.dmi'
 	icon_state = "Breaker_cabinet_closed"
 	var/district = null
 
@@ -4846,7 +4846,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "breaker cabinet"
 	desc = "High-current breakers. District load lives here."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/Reactor_32x32.dmi'
 	icon_state = "Breaker_cabinet_closed"
 	var/district = null
 
@@ -4888,7 +4888,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "district load controller"
 	desc = "Routes reactor power to a specific district without touching the full grid."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	var/district = null
 	var/default_outage_seconds = 90
@@ -4962,7 +4962,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_relay_console
 	name = "relay operations console"
 	desc = "Monitors and controls one district power relay."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
@@ -5037,7 +5037,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_faction_district_console
 	name = "district dispatch console"
 	desc = "Reactor-side console for routing BOS, NCR, Legion, Town, and Mass Fusion district power."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
@@ -5196,7 +5196,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "purge valve"
 	desc = "A purge valve for flushing contaminated coolant."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'fallout/eris/icons/96x96.dmi'
 	icon_state = "coolant valve"
 	pixel_x = -32
 	pixel_y = -32
@@ -5276,7 +5276,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/wasteland_grid_console
 	name = "Mass Fusion grid console"
 	desc = "Controls the wasteland electrical grid."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
@@ -5920,7 +5920,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 		return
 
 	if(GLOB.wasteland_grid_restart_lock)
-		to_chat(user, "<span class='warning'>Restart in progress. Don’t spam it.</span>")
+		to_chat(user, "<span class='warning'>Restart in progress. Donâ€™t spam it.</span>")
 		return
 
 	if(GLOB.wasteland_grid_fuel <= 0 || GLOB.wasteland_grid_coolant <= 0)
@@ -6040,7 +6040,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/wasteland_grid_advisor_console
 	name = "reactor advisor console"
 	desc = "Decision-support terminal for reactor operations and safe setpoint guidance."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
@@ -6414,7 +6414,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/work_order_board
 	name = "work order board"
 	desc = "Reactor contracts console. Feed the plant, get paid."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
@@ -6671,5 +6671,5 @@ proc/_pay_caps(mob/user, amount)
 // - /obj/machinery/f13/wasteland_grid_advisor_console
 // - /obj/structure/grid/purge_valve     (component_tag="purge_valve_1")
 //
-// They’ll automatically register into GLOB.grid_components_by_tag at init.
+// Theyâ€™ll automatically register into GLOB.grid_components_by_tag at init.
 ///////////////////////////////////////////////////////////////

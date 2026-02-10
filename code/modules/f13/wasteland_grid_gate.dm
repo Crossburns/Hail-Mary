@@ -37,3 +37,7 @@
 	if(requires_wasteland_grid && !wasteland_grid_ok())
 		return FALSE
 	return TRUE
+
+// Map compatibility alias for pre-existing placed machinery paths.
+/obj/machinery/f13_grid_gated/water_purifier
+	parent_type = /obj/machinery/f13/faction_water_purifier

@@ -904,6 +904,11 @@ GLOBAL_VAR_INIT(vendor_cash, 0)
 		new /datum/data/wasteland_equipment("Forged Barrel",				/obj/item/gun_upgrade/barrel/forged,							60)
 		)
 
+// Legacy map alias used by Mojave map files.
+/obj/machinery/mineral/wasteland_vendor/powerarmor
+	parent_type = /obj/machinery/mineral/wasteland_vendor/attachments
+	name = "Wasteland Vending Machine - Power Armor"
+
 /obj/machinery/mineral/wasteland_vendor/crafting
 	name = "Wasteland Vending Machine - Crafting"
 	icon_state = "generic_idle"

@@ -267,7 +267,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/item/faction_charter
 	name = "blank faction charter"
 	desc = "An official document that can be used to establish a new wasteland faction. Cannot be used by members of major factions (NCR, Brotherhood, Legion, Town, Mass Fusion)."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "paper"
 	w_class = WEIGHT_CLASS_TINY
 
@@ -481,7 +481,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/machinery/f13/player_faction_console
 	name = "faction control console"
 	desc = "A console for managing a player-created faction."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
@@ -704,7 +704,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/item/deployable_faction_console
 	name = "faction control console kit"
 	desc = "A kit to deploy a faction control console. Each faction can only have one."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/assemblies.dmi'
 	icon_state = "dvd"
 	w_class = WEIGHT_CLASS_NORMAL
 
@@ -752,7 +752,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/structure/player_faction_district_node
 	name = "faction district node"
 	desc = "A power distribution node that connects a player faction's territory to the wasteland grid."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'code/modules/f13/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	anchored = TRUE
@@ -980,7 +980,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/item/deployable_district_node
 	name = "district node kit"
 	desc = "A kit to deploy a district power node. Each faction can only have one."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/assemblies.dmi'
 	icon_state = "dvd"
 	w_class = WEIGHT_CLASS_NORMAL
 
@@ -1031,7 +1031,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/item/territory_claim_beacon
 	name = "territory claim beacon"
 	desc = "A device used to claim a 10x10 territory for your faction. Plant it in unclaimed land away from major faction bases."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'icons/obj/assemblies.dmi'
 	icon_state = "dvd"
 	w_class = WEIGHT_CLASS_SMALL
 
@@ -1174,7 +1174,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/structure/faction_claim_marker
 	name = "faction territory marker"
 	desc = "A marker indicating this territory is claimed by a player faction."
-	icon = GRID_FACTION_ASSET_DMI
+	icon = 'mojave/icons/structure/street_signs.dmi'
 	icon_state = "warnings"
 	anchored = TRUE
 	density = TRUE

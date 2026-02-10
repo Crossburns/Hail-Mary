@@ -32,6 +32,25 @@
 	/obj/item/parcel = 400
 					)
 
+// Canonical spelling and map compatibility aliases.
+/obj/machinery/bounty_machine/faction/courier
+	parent_type = /obj/machinery/bounty_machine/faction/coureer
+
+/obj/machinery/bounty_machine/faction/courier/town
+	faction_id = FACTION_EASTWOOD
+
+/obj/machinery/bounty_machine/faction/courier/ncr
+	faction_id = FACTION_NCR
+
+/obj/machinery/bounty_machine/faction/courier/legion
+	faction_id = FACTION_LEGION
+
+/obj/machinery/bounty_machine/faction/courier/bos
+	faction_id = FACTION_BROTHERHOOD
+
+/obj/machinery/bounty_machine/faction/courier/massfusion
+	faction_id = FACTION_MASS_FUSION
+
 /*
 ================ Mechanics ======================
 */
