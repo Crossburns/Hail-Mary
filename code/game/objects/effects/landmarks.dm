@@ -809,12 +809,20 @@ obj/effect/landmark/start/f13/ncrlogisticsofficer
 	name = "Mass Fusion Hazard Recovery Tech"
 	icon_state = "Engineer"
 
+/obj/effect/landmark/start/f13/massfusionsupervisor
+	name = "Mass Fusion Supervisor"
+	icon_state = "Chief Engineer"
+
 /obj/effect/landmark/start/f13/massfusionreactoroperator
 	name = "Mass Fusion Reactor Operator"
 	icon_state = "Engineer"
 
 /obj/effect/landmark/start/f13/massfusionrelayengineer
 	name = "Mass Fusion Relay Engineer"
+	icon_state = "Engineer"
+
+/obj/effect/landmark/start/f13/massfusiongridtechnician
+	name = "Mass Fusion Grid Technician"
 	icon_state = "Engineer"
 
 /obj/effect/landmark/start/f13/massfusionscavenger
