@@ -21,6 +21,7 @@
 /mob/living/var/current_weather_client_colour = null
 /mob/living/var/current_material_client_colour = null
 /mob/living/var/next_cinematic_visual_update = 0
+/mob/living/var/cinematic_postfx_cleared = FALSE
 
 
 /*
@@ -69,6 +70,12 @@
 		client.color = CC.colour
 
 /mob/proc/update_area_client_colour(area/current_area)
+	if(!F13_ENABLE_AREA_GRADING)
+		if(current_area_client_colour)
+			remove_client_colour(current_area_client_colour)
+			current_area_client_colour = null
+		return
+
 	var/new_colour_type = null
 	if(istype(current_area) && ispath(current_area.client_colour_grade, /datum/client_colour))
 		new_colour_type = current_area.client_colour_grade
@@ -90,6 +97,42 @@
 		var/obj/screen/fullscreen/cinematic_transition/fade = overlay_fullscreen("cinematic_transition", /obj/screen/fullscreen/cinematic_transition)
 		fade.alpha = 22
 		animate(fade, alpha = 0, time = 7)
+
+/mob/living/proc/clear_cinematic_postfx()
+	if(!client)
+		return
+	if(cinematic_postfx_cleared)
+		return
+
+	// Remove fullscreen overlays injected by the cinematic lighting layer.
+	clear_fullscreen("cinematic_transition", FALSE)
+	clear_fullscreen("cinematic_exposure", FALSE)
+	clear_fullscreen("cinematic_mood", FALSE)
+	clear_fullscreen("cinematic_rads", FALSE)
+	clear_fullscreen("cinematic_heat_haze", FALSE)
+	clear_fullscreen("cinematic_emergency", FALSE)
+	clear_fullscreen("cinematic_dust", FALSE)
+	clear_fullscreen("cinematic_lens_glow", FALSE)
+	clear_fullscreen("lighting_grain", FALSE)
+
+	// Remove zone/daylight/weather/material grading while postfx is disabled.
+	if(current_daylight_client_colour)
+		remove_client_colour(current_daylight_client_colour)
+		current_daylight_client_colour = null
+	if(current_weather_client_colour)
+		remove_client_colour(current_weather_client_colour)
+		current_weather_client_colour = null
+	if(current_material_client_colour)
+		remove_client_colour(current_material_client_colour)
+		current_material_client_colour = null
+
+	if(hud_used)
+		var/obj/screen/plane_master/lighting/lighting_plane = hud_used.plane_masters["[LIGHTING_PLANE]"]
+		if(lighting_plane)
+			lighting_plane.remove_filter("cinematic_bloom_soft")
+			lighting_plane.remove_filter("cinematic_bloom_wide")
+
+	cinematic_postfx_cleared = TRUE
 
 /mob/proc/get_auto_zone_grade(area/current_area)
 	if(!istype(current_area))
@@ -165,9 +208,13 @@
 	return CLAMP01(strength)
 
 /mob/living/proc/update_cinematic_visuals()
+	if(!F13_ENABLE_CINEMATIC_POSTFX)
+		clear_cinematic_postfx()
+		return
 	if(!client || world.time < next_cinematic_visual_update)
 		return
 	next_cinematic_visual_update = world.time + 2 SECONDS
+	cinematic_postfx_cleared = FALSE
 
 	var/area/current_area = get_area(src)
 	var/turf/current_turf = get_turf(src)

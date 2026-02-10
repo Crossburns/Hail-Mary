@@ -73,6 +73,36 @@
 
 // ---- Z-Level Activity ----
 #define FAUNA_Z_ACTIVE_TTL 4200
+#define FAUNA_LOCAL_ACTIVE_RANGE 20
+#define FAUNA_VIRTUAL_TICK_EVERY 5
+#define FAUNA_MATERIALIZE_EVERY 20
+#define FAUNA_MATERIALIZE_BUDGET 4
+#define FAUNA_MATERIALIZE_RANGE 18
+#define FAUNA_MATERIALIZE_MAX_LOCAL 2
+#define FAUNA_MATERIALIZE_MARKER_SEARCH 28
+#define FAUNA_MATERIALIZE_MARKER_SPAWN_MIN 10
+#define FAUNA_MATERIALIZE_MARKER_SPAWN_MAX 24
+#define FAUNA_SPAWN_PLAYER_SAFE_DIST 12
+#define FAUNA_MARKER_BOOTSTRAP_BURST 1
+#define FAUNA_MARKER_BOOTSTRAP_COOLDOWN 25 MINUTES
+#define FAUNA_ZONE_FOOD_BASE 50
+#define FAUNA_ZONE_FOOD_MIN 0
+#define FAUNA_ZONE_FOOD_MAX 100
+#define FAUNA_ZONE_PRESSURE_MIN 0
+#define FAUNA_ZONE_PRESSURE_MAX 100
+#define FAUNA_ZONE_STARVE_PUSH 24
+#define FAUNA_ZONE_CROWD_PUSH_PCT 70
+#define FAUNA_ZONE_DANGER_DECAY 0.45
+#define FAUNA_EXTINCTION_LOCK 18 MINUTES
+#define FAUNA_RECOLONIZE_CHANCE 14
+#define FAUNA_CARRY_FLOOR 2
+#define FAUNA_CARRY_OVERCAP_BUFFER 1.2
+#define FAUNA_ROUND_EARLY_MIN 45
+#define FAUNA_ROUND_MID_MIN 180
+#define FAUNA_PLAYER_IMPACT_EVERY 10
+#define FAUNA_HUNTING_DECAY 0.7
+#define FAUNA_CARRION_DECAY 0.8
+#define FAUNA_IMPACT_RANGE 10
 
 // ---- Roaming (NEW) ----
 #define FAUNA_ROAM_MIN 30
@@ -168,19 +198,890 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	var/list/z_last_human = list()
 	var/list/z_heat = list()
 
+	// Virtual ecosystem state (keeps world ecology moving even with no nearby players).
+	var/list/virtual_population = list()    // "z|habitat|species" -> count
+	var/list/zone_food = list()             // "z|habitat" -> 0..100
+	var/list/zone_player_pressure = list()  // "z|habitat" -> 0..100
+	var/list/zone_hunting_pressure = list() // "z|habitat" -> 0..100
+	var/list/zone_carrion_level = list()    // "z|habitat" -> 0..100
+	var/list/zone_danger_memory = list()    // "z|habitat" -> 0..100
+	var/list/extinction_until = list()      // "z|habitat|species" -> world.time
+	var/list/marker_bootstrap_until = list() // "\ref[turf]" -> world.time
+	var/virtual_seeded = FALSE
+	var/virtual_tick_multiplier = 1.0
+	var/materialize_multiplier = 1.0
+	var/hunting_impact_multiplier = 1.0
+	var/carrion_attract_multiplier = 1.0
+
 	var/next_repro_tick = 0
 	var/process_cycle = 0
 
 	var/debug_logging = FALSE
 
 // ============== HELPER: Safe ref key ==============
-/datum/controller/subsystem/fauna_ecosystem/proc/mob_key(mob/M)
-	if(!M) return null
-	return "\ref[M]"
+/datum/controller/subsystem/fauna_ecosystem/proc/mob_key(atom/A)
+	if(!A)
+		return null
+	// Prefix to avoid BYOND treating hex-like refs as numeric list indexes.
+	return "mob:[REF(A)]"
 
 /datum/controller/subsystem/fauna_ecosystem/proc/get_mob_from_key(key)
-	if(!key) return null
-	return locate(key)
+	if(!key)
+		return null
+	var/lookup = "[key]"
+	if(findtext(lookup, "mob:") == 1)
+		lookup = copytext(lookup, 5)
+	var/atom/A = locate(lookup)
+	if(ismob(A))
+		return A
+	return null
+
+/datum/controller/subsystem/fauna_ecosystem/proc/turf_key(turf/T)
+	if(!T)
+		return null
+	return "[T.x],[T.y],[T.z]"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_habitat_for_area(area/A)
+	if(!A) return "other"
+	var/custom_habitat = A.vars["fauna_habitat"]
+	if(istext(custom_habitat))
+		var/custom = lowertext("[custom_habitat]")
+		if(custom in list("wasteland", "cave", "building", "other"))
+			return custom
+	if(istype(A, /area/f13/caves) || istype(A, /area/f13/tunnel))
+		return "cave"
+	if(istype(A, /area/f13/building))
+		return "building"
+	if(istype(A, /area/f13/wasteland) || istype(A, /area/f13/forest) || istype(A, /area/f13/ruins))
+		return "wasteland"
+	return "other"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_habitat_for_turf(turf/T)
+	if(!T) return "other"
+	var/datum/fauna_preset_runtime/P = get_preset_for_turf(T)
+	if(P && istext(P.fauna_habitat))
+		var/custom = lowertext("[P.fauna_habitat]")
+		if(custom in list("wasteland", "cave", "building", "other"))
+			return custom
+	return get_habitat_for_area(get_area(T))
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_preset_for_turf(turf/T)
+	if(!T || !islist(GLOB.fauna_presets_by_turf))
+		return null
+	var/key = turf_key(T)
+	if(!key)
+		return null
+	var/datum/fauna_preset_runtime/P = GLOB.fauna_presets_by_turf[key]
+	if(!istype(P, /datum/fauna_preset_runtime))
+		return null
+	return P
+
+/datum/controller/subsystem/fauna_ecosystem/proc/zone_key(z, habitat)
+	return "[z]|[habitat]"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/pop_key(z, habitat, species_id)
+	return "[z]|[habitat]|[species_id]"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/z_state_key(z)
+	return "z:[z]"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/ensure_zone_state(z, habitat)
+	var/zkey = zone_key(z, habitat)
+	if(isnull(zone_food[zkey]))
+		zone_food[zkey] = FAUNA_ZONE_FOOD_BASE
+	if(isnull(zone_player_pressure[zkey]))
+		zone_player_pressure[zkey] = 0
+	if(isnull(zone_hunting_pressure[zkey]))
+		zone_hunting_pressure[zkey] = 0
+	if(isnull(zone_carrion_level[zkey]))
+		zone_carrion_level[zkey] = 0
+	if(isnull(zone_danger_memory[zkey]))
+		zone_danger_memory[zkey] = 0
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_area_num_tag(area/A, tag_name, fallback = 0)
+	if(!A || !tag_name)
+		return fallback
+	var/value = A.vars[tag_name]
+	if(isnull(value))
+		return fallback
+	if(isnum(value))
+		return value
+	if(istext(value))
+		var/as_num = text2num(value)
+		if(!isnull(as_num))
+			return as_num
+	return fallback
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_area_bool_tag(area/A, tag_name)
+	return get_area_num_tag(A, tag_name, 0) > 0
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_context_num_tag(turf/T, area/A, tag_name, fallback = 0)
+	var/datum/fauna_preset_runtime/P = get_preset_for_turf(T)
+	if(P)
+		var/preset_value = P.vars[tag_name]
+		if(!isnull(preset_value))
+			if(isnum(preset_value))
+				return preset_value
+			if(istext(preset_value))
+				var/as_num = text2num(preset_value)
+				if(!isnull(as_num))
+					return as_num
+	return get_area_num_tag(A, tag_name, fallback)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_context_bool_tag(turf/T, area/A, tag_name)
+	return get_context_num_tag(T, A, tag_name, 0) > 0
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_context_spawn_mult(turf/T, area/A)
+	return clamp(get_context_num_tag(T, A, "fauna_spawn_mult", 1), 0, 4)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_context_forage_bonus(turf/T, area/A)
+	var/bonus = get_context_num_tag(T, A, "fauna_forage_bonus", 0)
+	if(get_context_bool_tag(T, A, "fauna_forage_rich"))
+		bonus += 4
+	if(get_context_bool_tag(T, A, "water_source"))
+		bonus += 2
+	return clamp(bonus, -10, 12)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_context_migration_bias(turf/T, area/A)
+	return clamp(get_context_num_tag(T, A, "fauna_migration_bias", 0), -12, 12)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/is_context_no_spawn(turf/T, area/A)
+	return get_context_bool_tag(T, A, "fauna_no_spawn")
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_area_spawn_mult(area/A)
+	return clamp(get_area_num_tag(A, "fauna_spawn_mult", 1), 0, 4)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_area_forage_bonus(area/A)
+	var/bonus = get_area_num_tag(A, "fauna_forage_bonus", 0)
+	if(get_area_bool_tag(A, "fauna_forage_rich"))
+		bonus += 4
+	if(get_area_bool_tag(A, "water_source"))
+		bonus += 2
+	return clamp(bonus, -10, 12)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_area_migration_bias(area/A)
+	return clamp(get_area_num_tag(A, "fauna_migration_bias", 0), -12, 12)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/is_area_no_spawn(area/A)
+	return get_area_bool_tag(A, "fauna_no_spawn")
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_zone_prey_total(z, habitat)
+	var/total = 0
+	for(var/id in species_defs)
+		var/datum/fauna_species/S = species_defs[id]
+		if(!S || S.role != FAUNA_ROLE_PREY)
+			continue
+		total += (virtual_population[pop_key(z, habitat, S.id)] || 0)
+	return total
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_zone_marker_profile(z, habitat)
+	var/list/profile = list()
+	profile["spawn_mult"] = 1.0
+	profile["forage_bonus"] = 0.0
+	profile["migration_bias"] = 0.0
+	profile["water_bonus"] = 0.0
+	profile["marker_count"] = 0
+	profile["dead_zone_weight"] = 0.0
+	if(!islist(GLOB.fauna_presets_by_z))
+		return profile
+	var/z_key = "z:[z]"
+	var/list/z_bucket = GLOB.fauna_presets_by_z[z_key]
+	if(!islist(z_bucket) || !length(z_bucket))
+		return profile
+
+	var/count = 0
+	var/dead_count = 0
+	var/spawn_sum = 0.0
+	var/forage_sum = 0.0
+	var/migration_sum = 0.0
+	var/water_sum = 0.0
+	for(var/datum/fauna_preset_runtime/P in z_bucket)
+		if(!P || QDELETED(P))
+			continue
+		if(istext(P.fauna_habitat))
+			var/preset_hab = lowertext("[P.fauna_habitat]")
+			if(preset_hab != habitat)
+				continue
+		count++
+		var/spawn_mult = 1.0
+		if(isnum(P.fauna_spawn_mult))
+			spawn_mult = max(0.1, P.fauna_spawn_mult)
+		spawn_sum += spawn_mult
+		var/forage_bonus = 0.0
+		if(isnum(P.fauna_forage_bonus))
+			forage_bonus += P.fauna_forage_bonus
+		if(P.fauna_forage_rich)
+			forage_bonus += 4
+		forage_sum += forage_bonus
+		if(isnum(P.fauna_migration_bias))
+			migration_sum += P.fauna_migration_bias
+		if(P.water_source)
+			water_sum += 2
+		if(P.fauna_no_spawn)
+			dead_count++
+	if(count <= 0)
+		return profile
+	profile["marker_count"] = count
+	profile["spawn_mult"] = spawn_sum / count
+	profile["forage_bonus"] = forage_sum / count
+	profile["migration_bias"] = migration_sum / count
+	profile["water_bonus"] = water_sum / count
+	profile["dead_zone_weight"] = dead_count / count
+	return profile
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_species_pop_on_z(datum/fauna_species/S, z, exclude_habitat = null)
+	if(!S) return 0
+	var/total = 0
+	for(var/hab in list("wasteland", "cave", "building", "other"))
+		if(exclude_habitat && hab == exclude_habitat)
+			continue
+		total += (virtual_population[pop_key(z, hab, S.id)] || 0)
+	return total
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_round_minutes()
+	return world.time / 600
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_round_phase()
+	var/minutes = get_round_minutes()
+	if(minutes < FAUNA_ROUND_EARLY_MIN)
+		return "early"
+	if(minutes < FAUNA_ROUND_MID_MIN)
+		return "mid"
+	return "late"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_weather_pressure_for_habitat(habitat)
+	var/pressure = 0
+	var/datum/weather/W = SSweather?.current_weather
+	if(!W)
+		return pressure
+	var/is_dangerous = FALSE
+	if(!isnull(W.is_dangerous))
+		is_dangerous = !!W.is_dangerous
+	if(is_dangerous)
+		if(habitat == "wasteland" || habitat == "other")
+			pressure += 10
+		else
+			pressure += 4
+	var/lower_name = lowertext("[W.name]")
+	if(findtext(lower_name, "rad"))
+		pressure += 8
+	if(findtext(lower_name, "sand"))
+		pressure += 6
+	if(findtext(lower_name, "acid"))
+		pressure += 5
+	return pressure
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_grid_pressure_for_habitat(habitat)
+	var/pressure = 0
+	var/bg_rads = GLOB.wasteland_grid_background_rads || 0
+	if(habitat == "wasteland" || habitat == "other")
+		pressure += min(16, round(bg_rads * 0.8))
+	else
+		pressure += min(9, round(bg_rads * 0.35))
+	switch(GLOB.wasteland_grid_state)
+		if("RED")
+			pressure += (habitat == "wasteland") ? 8 : 3
+		if("YELLOW")
+			pressure += (habitat == "wasteland") ? 4 : 2
+	return pressure
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_zone_capacity(datum/fauna_species/S, z, habitat)
+	if(!S) return FAUNA_CARRY_FLOOR
+	var/zkey = zone_key(z, habitat)
+	ensure_zone_state(z, habitat)
+	var/food = zone_food[zkey] || FAUNA_ZONE_FOOD_BASE
+	var/pressure = zone_player_pressure[zkey] || 0
+	var/hunting = zone_hunting_pressure[zkey] || 0
+	var/carrion = zone_carrion_level[zkey] || 0
+	var/danger = zone_danger_memory[zkey] || 0
+
+	var/hab_mult = 1.0
+	switch(habitat)
+		if("wasteland") hab_mult = 1.0
+		if("cave") hab_mult = (S.role == FAUNA_ROLE_PREY) ? 0.8 : 1.2
+		if("building") hab_mult = (S.role == FAUNA_ROLE_PREY) ? 0.9 : 0.7
+		if("other") hab_mult = 0.75
+
+	var/food_mult = 0.55 + (food / 100) * 0.9
+	var/pressure_mult = 1 - min(0.55, pressure / 180)
+	var/danger_mult = 1 - min(0.45, danger / 220)
+	var/role_mult = 1.0
+	if(S.role == FAUNA_ROLE_PREY)
+		role_mult -= min(0.35, hunting / 220)
+	else
+		role_mult += min(0.25, carrion / 220)
+
+	var/phase = get_round_phase()
+	if(phase == "early")
+		if(S.role >= FAUNA_ROLE_HUNTER)
+			role_mult *= 0.88
+	else if(phase == "late")
+		if(S.role >= FAUNA_ROLE_HUNTER)
+			role_mult *= 1.12
+		else if(S.role == FAUNA_ROLE_PREY)
+			role_mult *= 0.94
+
+	var/capacity = round(S.hardcap * hab_mult * food_mult * pressure_mult * danger_mult * role_mult)
+	var/max_allowed = round(S.hardcap * FAUNA_CARRY_OVERCAP_BUFFER)
+	return clamp(capacity, FAUNA_CARRY_FLOOR, max_allowed)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/pick_migration_habitat(datum/fauna_species/S, z, current_habitat)
+	if(!S) return current_habitat
+	var/best_habitat = current_habitat
+	var/best_score = -1.0e20
+	for(var/habitat in list("wasteland", "cave", "building", "other"))
+		if(habitat == current_habitat)
+			continue
+		var/list/profile = get_zone_marker_profile(z, habitat)
+		var/zkey = zone_key(z, habitat)
+		ensure_zone_state(z, habitat)
+		var/food = zone_food[zkey] || FAUNA_ZONE_FOOD_BASE
+		var/pressure = zone_player_pressure[zkey] || 0
+		var/danger = zone_danger_memory[zkey] || 0
+		var/capacity = get_zone_capacity(S, z, habitat)
+		var/score = capacity
+		score += food * 0.65
+		score -= pressure * 0.8
+		score -= danger * 1.0
+		score += (profile["forage_bonus"] || 0) * 1.2
+		score += (profile["migration_bias"] || 0) * -1
+		score -= (profile["dead_zone_weight"] || 0) * 24
+		if(S.role >= FAUNA_ROLE_HUNTER)
+			score += (zone_carrion_level[zkey] || 0) * 0.25
+		if(score > best_score)
+			best_score = score
+			best_habitat = habitat
+	return best_habitat
+
+/datum/controller/subsystem/fauna_ecosystem/proc/seed_virtual_from_world()
+	virtual_population = list()
+	for(var/mob/living/simple_animal/hostile/M in world)
+		if(QDELETED(M) || M.stat) continue
+		var/datum/fauna_species/S = get_species_for_mob(M)
+		if(!S) continue
+		var/turf/T = get_turf(M)
+		if(!T) continue
+		var/habitat = get_habitat_for_turf(T)
+		var/key = pop_key(T.z, habitat, S.id)
+		virtual_population[key] = (virtual_population[key] || 0) + 1
+		ensure_zone_state(T.z, habitat)
+	// If mapper/map starts with no placed fauna, seed a small baseline population
+	// from marker-tagged habitats so the ecosystem can materialize naturally.
+	if(!get_total_virtual_population())
+		seed_virtual_baseline()
+	virtual_seeded = TRUE
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_total_virtual_population()
+	var/total = 0
+	for(var/k in virtual_population)
+		total += max(0, round(virtual_population[k] || 0))
+	return total
+
+/datum/controller/subsystem/fauna_ecosystem/proc/seed_virtual_baseline()
+	var/list/habitats = list("wasteland", "cave", "building", "other")
+	for(var/z in 1 to world.maxz)
+		for(var/habitat in habitats)
+			ensure_zone_state(z, habitat)
+			var/list/profile = get_zone_marker_profile(z, habitat)
+			var/marker_count = round(profile["marker_count"] || 0)
+			if(marker_count <= 0)
+				continue
+			if((profile["dead_zone_weight"] || 0) >= 0.95)
+				continue
+			var/spawn_mult = max(0.1, profile["spawn_mult"] || 1)
+			var/forage_bonus = profile["forage_bonus"] || 0
+
+			for(var/id in species_defs)
+				var/datum/fauna_species/S = species_defs[id]
+				if(!S)
+					continue
+				var/cap = get_zone_capacity(S, z, habitat)
+				if(cap <= 0)
+					continue
+				var/seed = 0
+				switch(S.role)
+					if(FAUNA_ROLE_PREY)
+						seed = clamp(round(cap * 0.10 * spawn_mult), 1, 2)
+					if(FAUNA_ROLE_AMBUSH)
+						if(prob(55))
+							seed = clamp(round(cap * 0.08), 0, 2)
+					if(FAUNA_ROLE_HUNTER)
+						if(spawn_mult >= 1.4 || forage_bonus >= 4)
+							if(prob(40))
+								seed = 1
+					if(FAUNA_ROLE_APEX)
+						if(marker_count >= 3 && spawn_mult >= 1.8)
+							if(prob(15))
+								seed = 1
+				if(seed <= 0)
+					continue
+				var/pkey = pop_key(z, habitat, S.id)
+				virtual_population[pkey] = max(round(virtual_population[pkey] || 0), seed)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/process_virtual_ecosystem()
+	if(!virtual_seeded)
+		seed_virtual_from_world()
+
+	var/list/habitats = list("wasteland", "cave", "building", "other")
+	var/phase = get_round_phase()
+
+	// Decay/regenerate zone resources and pressure with weather/grid + marker coupling.
+	for(var/z in 1 to world.maxz)
+		for(var/habitat in habitats)
+			ensure_zone_state(z, habitat)
+			var/list/profile = get_zone_marker_profile(z, habitat)
+			var/zkey = zone_key(z, habitat)
+			var/food = zone_food[zkey] || FAUNA_ZONE_FOOD_BASE
+			var/pressure = zone_player_pressure[zkey] || 0
+			var/hunting = zone_hunting_pressure[zkey] || 0
+			var/carrion = zone_carrion_level[zkey] || 0
+			var/danger = zone_danger_memory[zkey] || 0
+			var/weather_pressure = get_weather_pressure_for_habitat(habitat)
+			var/grid_pressure = get_grid_pressure_for_habitat(habitat)
+			var/is_active = is_z_active(z)
+
+			var/base_food_delta = is_active ? -0.25 : 0.55
+			base_food_delta += (profile["forage_bonus"] || 0) * 0.05
+			base_food_delta += (profile["water_bonus"] || 0) * 0.06
+			base_food_delta -= (profile["dead_zone_weight"] || 0) * 0.5
+			food += base_food_delta
+
+			// Active zones should gradually build pressure; inactive zones should cool down.
+			pressure += is_active ? 0.28 : -0.45
+			pressure += weather_pressure * 0.06
+			pressure += grid_pressure * 0.04
+			hunting = max(0, hunting - FAUNA_HUNTING_DECAY)
+			carrion = max(0, carrion - FAUNA_CARRION_DECAY)
+
+			var/target_danger = 0
+			target_danger += pressure * 0.35
+			target_danger += hunting * 0.45
+			target_danger += weather_pressure * 1.35
+			target_danger += grid_pressure * 1.55
+			target_danger += max(0, 50 - food) * 0.25
+			target_danger += carrion * 0.18
+			target_danger -= (profile["forage_bonus"] || 0) * 0.6
+			target_danger += (profile["dead_zone_weight"] || 0) * 16
+			danger += (target_danger - danger) * 0.22
+			danger = max(0, danger - FAUNA_ZONE_DANGER_DECAY)
+
+			zone_player_pressure[zkey] = clamp(pressure, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+			zone_food[zkey] = clamp(food, FAUNA_ZONE_FOOD_MIN, FAUNA_ZONE_FOOD_MAX)
+			zone_hunting_pressure[zkey] = clamp(hunting, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+			zone_carrion_level[zkey] = clamp(carrion, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+			zone_danger_memory[zkey] = clamp(danger, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+
+	// Species-level virtual growth/decline/migration.
+	var/list/migration_deltas = list() // pop_key -> signed delta
+	for(var/z in 1 to world.maxz)
+		for(var/habitat in habitats)
+			ensure_zone_state(z, habitat)
+			var/list/profile = get_zone_marker_profile(z, habitat)
+			var/zkey = zone_key(z, habitat)
+			var/food = zone_food[zkey] || FAUNA_ZONE_FOOD_BASE
+			var/pressure = zone_player_pressure[zkey] || 0
+			var/hunting = zone_hunting_pressure[zkey] || 0
+			var/carrion = zone_carrion_level[zkey] || 0
+			var/danger = zone_danger_memory[zkey] || 0
+			var/prey_total = get_zone_prey_total(z, habitat)
+			for(var/species_id in species_defs)
+				var/datum/fauna_species/S = species_defs[species_id]
+				if(!S)
+					continue
+
+				var/pkey = pop_key(z, habitat, S.id)
+				var/pop = virtual_population[pkey] || 0
+				var/capacity = get_zone_capacity(S, z, habitat)
+				if((profile["dead_zone_weight"] || 0) >= 0.95)
+					capacity = 0
+
+				var/ext_key = pkey
+				var/ext_lock_until = extinction_until[ext_key] || 0
+				var/ext_locked = ext_lock_until > world.time
+
+				// Recolonization from neighboring habitats on the same z-level.
+				if(pop <= 0)
+					if(capacity <= 0 || ext_locked)
+						continue
+					var/donor_pop = get_species_pop_on_z(S, z, habitat)
+					if(donor_pop <= 0)
+						continue
+					var/recol_chance = FAUNA_RECOLONIZE_CHANCE
+					recol_chance += round((profile["spawn_mult"] || 1) * 4)
+					recol_chance += round((profile["forage_bonus"] || 0) * 0.5)
+					recol_chance -= round(danger / 16)
+					if(S.role >= FAUNA_ROLE_HUNTER)
+						recol_chance -= 3
+					if(donor_pop >= 8)
+						recol_chance += 8
+					recol_chance = clamp(recol_chance, 1, 60)
+					if(prob(recol_chance))
+						var/new_seed = clamp(max(1, round(donor_pop * 0.06)), 1, max(1, capacity))
+						virtual_population[pkey] = new_seed
+						extinction_until -= ext_key
+						var/from_hab = null
+						var/from_pop = 0
+						for(var/candidate_hab in habitats)
+							if(candidate_hab == habitat)
+								continue
+							var/candidate_key = pop_key(z, candidate_hab, S.id)
+							var/candidate_pop = virtual_population[candidate_key] || 0
+							if(candidate_pop > from_pop)
+								from_pop = candidate_pop
+								from_hab = candidate_hab
+						if(from_hab)
+							var/from_key = pop_key(z, from_hab, S.id)
+							virtual_population[from_key] = max(0, (virtual_population[from_key] || 0) - 1)
+					continue
+
+				var/delta = 0
+				if(S.role == FAUNA_ROLE_PREY)
+					delta += round((food - 48) / 22)
+					delta += round(((capacity - pop) / max(6, capacity)))
+					delta -= round(pressure / 36)
+					delta -= round(hunting / 30)
+					delta -= round(danger / 45)
+					if(prey_total > (capacity * 2))
+						delta -= 1
+				else if(S.role == FAUNA_ROLE_AMBUSH || S.role == FAUNA_ROLE_HUNTER)
+					var/prey_support = prey_total + (carrion * 0.35)
+					delta += round((prey_support - 10) / 14)
+					delta -= round(pressure / 48)
+					delta -= round(danger / 55)
+					if(prey_total <= 3)
+						delta -= 1
+				else if(S.role == FAUNA_ROLE_APEX)
+					delta += round((prey_total - 14) / 18)
+					delta += round(carrion / 35)
+					delta -= round(pressure / 52)
+					delta -= round(danger / 50)
+					if(prey_total < 8)
+						delta -= 1
+
+				delta += round((profile["forage_bonus"] || 0) / 6)
+				if(S.role >= FAUNA_ROLE_HUNTER)
+					delta += round((profile["water_bonus"] || 0) / 8)
+
+				if(phase == "early")
+					if(S.role >= FAUNA_ROLE_HUNTER)
+						delta -= 1
+				else if(phase == "late")
+					if(S.role == FAUNA_ROLE_PREY && prey_total > 10)
+						delta -= 1
+					if(S.role >= FAUNA_ROLE_HUNTER && prey_total >= 8)
+						delta += 1
+
+				if(capacity <= 0)
+					delta -= max(1, round(pop * 0.25))
+				else if(pop > capacity)
+					var/overcap = pop - capacity
+					delta -= max(1, round(overcap / 3))
+
+				var/max_pop = max(FAUNA_CARRY_FLOOR, round(S.hardcap * FAUNA_CARRY_OVERCAP_BUFFER))
+				var/new_pop = clamp(pop + delta, 0, max_pop)
+				if(new_pop > 0 && capacity > 0)
+					new_pop = min(new_pop, max(FAUNA_CARRY_FLOOR, round(capacity * FAUNA_CARRY_OVERCAP_BUFFER)))
+
+				if(new_pop <= 0)
+					virtual_population[pkey] = 0
+					extinction_until[ext_key] = world.time + FAUNA_EXTINCTION_LOCK
+					zone_danger_memory[zkey] = clamp((zone_danger_memory[zkey] || 0) + 3, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+					continue
+
+				virtual_population[pkey] = new_pop
+				if(extinction_until[ext_key])
+					extinction_until -= ext_key
+
+				// Autonomous migration pressure.
+				var/needs_migrate = FALSE
+				if(new_pop > (capacity + 1))
+					needs_migrate = TRUE
+				if(food <= (FAUNA_ZONE_STARVE_PUSH + round(profile["migration_bias"] || 0)) && new_pop > 1)
+					needs_migrate = TRUE
+				if(pressure >= 62 || danger >= 48)
+					needs_migrate = TRUE
+				if(capacity <= 1 && new_pop > 1)
+					needs_migrate = TRUE
+				if(needs_migrate)
+					var/next_hab = pick_migration_habitat(S, z, habitat)
+					if(next_hab != habitat)
+						var/shift = min(3, max(1, round(new_pop * 0.12)))
+						var/from_key = pkey
+						var/to_key = pop_key(z, next_hab, S.id)
+						migration_deltas[from_key] = (migration_deltas[from_key] || 0) - shift
+						migration_deltas[to_key] = (migration_deltas[to_key] || 0) + shift
+						ensure_zone_state(z, next_hab)
+
+	for(var/mkey in migration_deltas)
+		var/new_value = max(0, (virtual_population[mkey] || 0) + migration_deltas[mkey])
+		virtual_population[mkey] = new_value
+
+/datum/controller/subsystem/fauna_ecosystem/proc/count_species_near_turf(datum/fauna_species/S, turf/T, range_dist)
+	if(!S || !T) return 0
+	var/count = 0
+	for(var/mob/living/simple_animal/hostile/M in range(range_dist, T))
+		if(QDELETED(M) || M.stat) continue
+		if(istype(M, S.mob_type))
+			count++
+	return count
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_dominant_virtual_species(z, habitat)
+	var/datum/fauna_species/best = null
+	var/best_count = -1
+	for(var/id in species_defs)
+		var/datum/fauna_species/S = species_defs[id]
+		if(!S)
+			continue
+		var/v = virtual_population[pop_key(z, habitat, S.id)] || 0
+		if(v > best_count)
+			best_count = v
+			best = S
+	return best
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_prey_virtual_species(z, habitat)
+	var/datum/fauna_species/best = null
+	var/best_count = -1
+	for(var/id in species_defs)
+		var/datum/fauna_species/S = species_defs[id]
+		if(!S || S.role != FAUNA_ROLE_PREY)
+			continue
+		var/v = virtual_population[pop_key(z, habitat, S.id)] || 0
+		if(v > best_count)
+			best_count = v
+			best = S
+	return best
+
+/datum/controller/subsystem/fauna_ecosystem/proc/process_virtual_materialization()
+	if(!virtual_seeded)
+		return
+	if(!islist(marker_bootstrap_until))
+		marker_bootstrap_until = list()
+	var/spawn_budget = max(0, round(FAUNA_MATERIALIZE_BUDGET * materialize_multiplier))
+	var/spawned_total = 0
+	for(var/mob/living/carbon/human/H in world)
+		if(spawn_budget <= 0) break
+		if(QDELETED(H) || H.stat) continue
+		var/turf/HT = get_turf(H)
+		if(!HT) continue
+		var/list/centers = get_materialize_centers(HT)
+		// One-shot marker bootstrap: when a player first approaches a marker cluster,
+		// force a small off-screen burst so the area "comes alive" predictably.
+		for(var/turf/center in centers)
+			if(spawn_budget <= 0)
+				break
+			var/center_key = turf_key(center)
+			if(!center_key)
+				continue
+			var/boot_until = marker_bootstrap_until[center_key] || 0
+			if(boot_until > world.time)
+				continue
+			var/habitat = get_habitat_for_turf(center)
+			var/area/A = get_area(center)
+			if(is_context_no_spawn(center, A))
+				continue
+			var/z = center.z
+			var/booted_here = 0
+			for(var/boot_i in 1 to FAUNA_MARKER_BOOTSTRAP_BURST)
+				if(spawn_budget <= 0)
+					break
+				var/datum/fauna_species/best_species = null
+				var/best_vcount = 0
+				for(var/id_boot in species_defs)
+					var/datum/fauna_species/Sboot = species_defs[id_boot]
+					if(!Sboot)
+						continue
+					var/best_key = pop_key(z, habitat, Sboot.id)
+					var/candidate = virtual_population[best_key] || 0
+					if(candidate <= 0)
+						continue
+					if(candidate > best_vcount)
+						best_vcount = candidate
+						best_species = Sboot
+				if(!best_species)
+					break
+				if(count_species_near_turf(best_species, center, FAUNA_MATERIALIZE_RANGE) >= FAUNA_MATERIALIZE_MAX_LOCAL)
+					break
+				var/turf/bootstrap_turf = pick_spread_turf(center, FAUNA_MATERIALIZE_MARKER_SPAWN_MIN, FAUNA_MATERIALIZE_MARKER_SPAWN_MAX)
+				if(!bootstrap_turf || !is_valid_turf(bootstrap_turf))
+					continue
+				if(is_turf_too_visible_for_spawn(bootstrap_turf))
+					continue
+				var/best_vkey = pop_key(z, habitat, best_species.id)
+				var/mob/living/simple_animal/hostile/bootstrap_mob = new best_species.mob_type(bootstrap_turf)
+				if(!bootstrap_mob)
+					continue
+				virtual_population[best_vkey] = max(0, (virtual_population[best_vkey] || 0) - 1)
+				set_home_turf(bootstrap_mob, bootstrap_turf)
+				spawn_budget--
+				spawned_total++
+				booted_here++
+			if(booted_here > 0)
+				marker_bootstrap_until[center_key] = world.time + FAUNA_MARKER_BOOTSTRAP_COOLDOWN
+			if(spawn_budget <= 0)
+				break
+		// First pass: deterministic marker-driven spawn to avoid long "nothing happens" stretches.
+		for(var/turf/center in centers)
+			if(spawn_budget <= 0) break
+			var/habitat = get_habitat_for_turf(center)
+			var/area/A = get_area(center)
+			if(is_context_no_spawn(center, A))
+				continue
+			var/z = center.z
+			var/datum/fauna_species/best_species = null
+			var/best_vcount = 0
+			for(var/id_best in species_defs)
+				var/datum/fauna_species/Sbest = species_defs[id_best]
+				if(!Sbest) continue
+				var/best_key = pop_key(z, habitat, Sbest.id)
+				var/candidate = virtual_population[best_key] || 0
+				if(candidate <= 0) continue
+				if(candidate > best_vcount)
+					best_vcount = candidate
+					best_species = Sbest
+			if(!best_species)
+				continue
+			if(count_species_near_turf(best_species, center, FAUNA_MATERIALIZE_RANGE) >= FAUNA_MATERIALIZE_MAX_LOCAL)
+				continue
+			var/turf/seed_turf = pick_spread_turf(center, FAUNA_MATERIALIZE_MARKER_SPAWN_MIN, FAUNA_MATERIALIZE_MARKER_SPAWN_MAX)
+			if(!seed_turf || !is_valid_turf(seed_turf))
+				continue
+			if(is_turf_too_visible_for_spawn(seed_turf))
+				continue
+			var/vbest_key = pop_key(z, habitat, best_species.id)
+			var/mob/living/simple_animal/hostile/seed_mob = new best_species.mob_type(seed_turf)
+			if(seed_mob)
+				virtual_population[vbest_key] = max(0, (virtual_population[vbest_key] || 0) - 1)
+				set_home_turf(seed_mob, seed_turf)
+				spawn_budget--
+				spawned_total++
+				if(spawned_total >= max(1, round(2 * materialize_multiplier)))
+					break
+		if(spawned_total >= max(1, round(2 * materialize_multiplier)))
+			break
+		for(var/turf/center in centers)
+			if(spawn_budget <= 0) break
+			var/habitat = get_habitat_for_turf(center)
+			var/area/A = get_area(center)
+			if(is_context_no_spawn(center, A))
+				continue
+			var/z = center.z
+			var/list/candidate_species = list()
+			var/datum/fauna_species/dominant = get_dominant_virtual_species(z, habitat)
+			if(dominant)
+				candidate_species += dominant
+			if(dominant && dominant.role >= FAUNA_ROLE_AMBUSH)
+				var/datum/fauna_species/prey_fallback = get_prey_virtual_species(z, habitat)
+				if(prey_fallback && !(prey_fallback in candidate_species) && prob(30))
+					candidate_species += prey_fallback
+			for(var/datum/fauna_species/S in candidate_species)
+				if(spawn_budget <= 0)
+					break
+				if(!S)
+					continue
+				var/vkey = pop_key(z, habitat, S.id)
+				var/vcount = virtual_population[vkey] || 0
+				if(vcount <= 0)
+					continue
+				if(count_species_near_turf(S, center, FAUNA_MATERIALIZE_RANGE) >= FAUNA_MATERIALIZE_MAX_LOCAL)
+					continue
+				var/spawn_mult = get_context_spawn_mult(center, A)
+				var/carrion = zone_carrion_level[zone_key(z, habitat)] || 0
+				var/carrion_bonus = round((carrion / 16) * carrion_attract_multiplier)
+				var/spawn_chance = clamp(round((2 + (vcount * 1.2) + carrion_bonus) * spawn_mult), 3, 38)
+				if(!prob(spawn_chance))
+					continue
+				var/turf/spawn_turf = pick_spread_turf(center, FAUNA_MATERIALIZE_MARKER_SPAWN_MIN, FAUNA_MATERIALIZE_MARKER_SPAWN_MAX)
+				if(!spawn_turf || !is_valid_turf(spawn_turf))
+					continue
+				if(is_turf_too_visible_for_spawn(spawn_turf))
+					continue
+				var/mob/living/simple_animal/hostile/new_mob = new S.mob_type(spawn_turf)
+				if(!new_mob)
+					continue
+				virtual_population[vkey] = max(0, vcount - 1)
+				set_home_turf(new_mob, spawn_turf)
+				spawn_budget--
+				spawned_total++
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_materialize_centers(turf/around_turf)
+	var/list/centers = list()
+	if(!around_turf)
+		return centers
+	if(!islist(GLOB.fauna_presets_by_z))
+		centers += around_turf
+		return centers
+	var/z_key = "z:[around_turf.z]"
+	var/list/z_bucket = GLOB.fauna_presets_by_z[z_key]
+	if(islist(z_bucket) && length(z_bucket))
+		for(var/datum/fauna_preset_runtime/P in z_bucket)
+			if(!P || QDELETED(P))
+				continue
+			var/turf/target = P.turf_ref
+			if(!target)
+				continue
+			if(get_dist(around_turf, target) <= FAUNA_MATERIALIZE_MARKER_SEARCH)
+				centers += target
+		// Marker-driven maps should only materialize from nearby markers.
+		return centers
+	// No preset markers at all on this z-level: fallback to player vicinity behavior.
+	centers += around_turf
+	return centers
+
+/datum/controller/subsystem/fauna_ecosystem/proc/is_turf_too_visible_for_spawn(turf/T)
+	if(!T)
+		return TRUE
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
+		if(!H || QDELETED(H) || H.stat)
+			continue
+		var/turf/HT = get_turf(H)
+		if(!HT || HT.z != T.z)
+			continue
+		if(get_dist(HT, T) < FAUNA_SPAWN_PLAYER_SAFE_DIST)
+			return TRUE
+		// Do not materialize directly inside the player's current viewport.
+		if(H.client && (T in view(H.client.view, H)))
+			return TRUE
+	return FALSE
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_virtual_repro_bias(mob/living/simple_animal/hostile/M, datum/fauna_species/S)
+	if(!M || !S) return 0
+	var/turf/T = get_turf(M)
+	if(!T) return 0
+	var/habitat = get_habitat_for_turf(T)
+	var/area/A = get_area(T)
+	var/zkey = zone_key(T.z, habitat)
+	var/food = zone_food[zkey] || FAUNA_ZONE_FOOD_BASE
+	var/pressure = zone_player_pressure[zkey] || 0
+	var/hunting = zone_hunting_pressure[zkey] || 0
+	var/prey_total = get_zone_prey_total(T.z, habitat)
+	var/bias = 0
+	if(S.role == FAUNA_ROLE_PREY)
+		bias += round((food - 50) / 12)
+		bias -= round(pressure / 20)
+		bias -= round(hunting / 22)
+	else
+		bias += round((prey_total - 10) / 8)
+		bias -= round(pressure / 22)
+	bias += round(get_context_forage_bonus(T, A) / 4)
+	return clamp(bias, -16, 16)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/maybe_apply_virtual_migration_intent(mob/living/simple_animal/hostile/M, datum/fauna_species/S)
+	if(!M || !S) return
+	if(prob(82)) return
+	var/turf/T = get_turf(M)
+	if(!T) return
+	var/habitat = get_habitat_for_turf(T)
+	var/area/A = get_area(T)
+	var/zkey = zone_key(T.z, habitat)
+	var/food = zone_food[zkey] || FAUNA_ZONE_FOOD_BASE
+	var/pressure = zone_player_pressure[zkey] || 0
+	var/migration_bias = get_context_migration_bias(T, A)
+	if(food > (30 + migration_bias) && pressure < (55 - migration_bias))
+		return
+	var/turf/goal = pick_long_roam_turf(M, 16, 34)
+	if(goal)
+		roam_goal[mob_key(M)] = goal
+		set_intent(M, FAUNA_STATE_ROAM, rand(30, 70))
 
 /datum/controller/subsystem/fauna_ecosystem/proc/ensure_mob_profile(mob/living/simple_animal/hostile/M)
 	if(!M) return
@@ -704,8 +1605,10 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	z_last_human = list()
 	z_heat = list()
 	for(var/z in 1 to world.maxz)
-		z_last_human += 0
-		z_heat += 0
+		// Start as long-inactive so untouched z-levels don't immediately ramp pressure.
+		var/zkey = z_state_key(z)
+		z_last_human[zkey] = -FAUNA_Z_ACTIVE_TTL
+		z_heat[zkey] = 0
 
 	build_species()
 
@@ -764,7 +1667,15 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		log_world("FAUNA: Tick [process_cycle] - [length(packs)] packs")
 
 	track_humans()
+	if(process_cycle % FAUNA_PLAYER_IMPACT_EVERY == 0)
+		process_player_impact()
+	var/virtual_every = max(1, round(FAUNA_VIRTUAL_TICK_EVERY / max(0.1, virtual_tick_multiplier)))
+	if(process_cycle % virtual_every == 0)
+		process_virtual_ecosystem()
 	process_fauna_behaviors()
+	var/materialize_every = max(1, round(FAUNA_MATERIALIZE_EVERY / max(0.1, materialize_multiplier)))
+	if(process_cycle % materialize_every == 0)
+		process_virtual_materialization()
 
 	if(process_cycle % FAUNA_PACK_PROCESS_EVERY == 0)
 		process_packs()
@@ -785,22 +1696,81 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 /datum/controller/subsystem/fauna_ecosystem/proc/track_humans()
 	var/night_mult = is_night() ? FAUNA_HEAT_NIGHT_MULT : 1
 
-	for(var/z in 1 to length(z_heat))
-		z_heat[z] = max(0, z_heat[z] - FAUNA_HEAT_DECAY)
+	for(var/z in 1 to world.maxz)
+		var/zkey = z_state_key(z)
+		z_heat[zkey] = max(0, (z_heat[zkey] || 0) - FAUNA_HEAT_DECAY)
 
 	for(var/mob/living/carbon/human/H in world)
 		if(H.stat) continue
 		var/turf/T = get_turf(H)
 		if(!T) continue
 
-		if(T.z <= length(z_last_human))
-			z_last_human[T.z] = world.time
-			z_heat[T.z] = min(FAUNA_HEAT_HARDCAP, z_heat[T.z] + (FAUNA_HEAT_FROM_HUMAN * night_mult))
+		if(T.z >= 1 && T.z <= world.maxz)
+			var/zkey = z_state_key(T.z)
+			z_last_human[zkey] = world.time
+			z_heat[zkey] = min(FAUNA_HEAT_HARDCAP, (z_heat[zkey] || 0) + (FAUNA_HEAT_FROM_HUMAN * night_mult))
+
+		var/area/A = get_area(T)
+		var/habitat = get_habitat_for_area(A)
+		var/zkey = zone_key(T.z, habitat)
+		ensure_zone_state(T.z, habitat)
+		var/forage_bonus = get_context_forage_bonus(T, A)
+		if(forage_bonus)
+			zone_food[zkey] = clamp((zone_food[zkey] || FAUNA_ZONE_FOOD_BASE) + (forage_bonus * 0.08), FAUNA_ZONE_FOOD_MIN, FAUNA_ZONE_FOOD_MAX)
+		// Player presence should always push local ecological pressure.
+		var/pressure_delta = 0.12
+		// Explicit no-spawn zones should register stronger pressure.
+		if(is_context_no_spawn(T, A))
+			pressure_delta += 0.28
+		zone_player_pressure[zkey] = clamp((zone_player_pressure[zkey] || 0) + pressure_delta, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/process_player_impact()
+	for(var/mob/living/carbon/human/H in world)
+		if(QDELETED(H) || H.stat)
+			continue
+		var/turf/HT = get_turf(H)
+		if(!HT)
+			continue
+		var/area/A = get_area(HT)
+		var/habitat = get_habitat_for_area(A)
+		var/zkey = zone_key(HT.z, habitat)
+		ensure_zone_state(HT.z, habitat)
+		var/local_kills = 0
+		var/carrion_found = 0
+		for(var/mob/living/simple_animal/hostile/F in range(FAUNA_IMPACT_RANGE, HT))
+			if(QDELETED(F))
+				continue
+			if(F.stat)
+				local_kills++
+		for(var/obj/O in range(FAUNA_IMPACT_RANGE, HT))
+			if(istype(O, /obj/effect/decal/cleanable/blood) || istype(O, /obj/item/reagent_containers/food/snacks))
+				carrion_found++
+		if(local_kills > 0)
+			var/hunt_delta = local_kills * 1.8 * hunting_impact_multiplier
+			zone_hunting_pressure[zkey] = clamp((zone_hunting_pressure[zkey] || 0) + hunt_delta, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+		if(carrion_found > 0)
+			var/carrion_delta = carrion_found * 0.7 * carrion_attract_multiplier
+			zone_carrion_level[zkey] = clamp((zone_carrion_level[zkey] || 0) + carrion_delta, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+		if(local_kills > 0 || carrion_found > 0)
+			var/danger_delta = (local_kills * 1.1) + (carrion_found * 0.35)
+			zone_danger_memory[zkey] = clamp((zone_danger_memory[zkey] || 0) + danger_delta, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
 
 /datum/controller/subsystem/fauna_ecosystem/proc/is_z_active(z)
-	if(z < 1 || z > length(z_last_human))
+	if(z < 1 || z > world.maxz)
 		return FALSE
-	return (world.time - z_last_human[z]) < FAUNA_Z_ACTIVE_TTL
+	var/zkey = z_state_key(z)
+	if(isnull(z_last_human[zkey]))
+		return FALSE
+	return (world.time - z_last_human[zkey]) < FAUNA_Z_ACTIVE_TTL
+
+/datum/controller/subsystem/fauna_ecosystem/proc/is_locally_active(mob/living/simple_animal/hostile/M)
+	if(!M || QDELETED(M))
+		return FALSE
+	if(is_z_active(M.z))
+		return TRUE
+	if(find_nearby_human(M, FAUNA_LOCAL_ACTIVE_RANGE))
+		return TRUE
+	return FALSE
 
 // ============== FAUNA BEHAVIOR PROCESSING ==============
 
@@ -808,7 +1778,7 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	for(var/mob/living/simple_animal/hostile/M in world)
 		if(QDELETED(M)) continue
 		if(M.stat) continue
-		if(!is_z_active(M.z)) continue
+		if(!is_locally_active(M)) continue
 
 		var/datum/fauna_species/S = get_species_for_mob(M)
 		if(!S) continue
@@ -820,6 +1790,7 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		tick_home_danger(M, S)
 		maybe_social_tick(M, S)
 		maybe_handle_territory_conflict(M, S)
+		maybe_apply_virtual_migration_intent(M, S)
 
 		var/rest_until = rest_timers[mkey]
 		if(rest_until && world.time < rest_until)
@@ -1643,10 +2614,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	for(var/mob/living/simple_animal/hostile/parent in world)
 		if(QDELETED(parent)) continue
 		if(parent.stat) continue
-		if(!is_z_active(parent.z))
-			// Still allow map fauna to breed when players are physically nearby.
-			if(!find_nearby_human(parent, FAUNA_MATE_SEARCH_RANGE + 6))
-				continue
+		if(!is_locally_active(parent))
+			continue
 
 		var/datum/fauna_species/S = get_species_for_mob(parent)
 		if(!S) continue
@@ -1719,6 +2688,12 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		if(current_pop >= S.hardcap)
 			continue
 
+		// Low-tier insects still need a hard pressure ceiling to prevent runaway waves.
+		if(S.id == "radroach" && current_pop >= round(S.hardcap * 0.70))
+			continue
+		if(S.id == "bloatfly" && current_pop >= round(S.hardcap * 0.65))
+			continue
+
 		var/turf/origin = get_turf(parent)
 		if(!origin || !is_valid_turf(origin))
 			continue
@@ -1762,6 +2737,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 
 		if(nearby_same <= 1 && current_pop < round(S.hardcap * 0.70))
 			chance += 6
+
+		chance += get_virtual_repro_bias(parent, S)
 
 		chance = clamp(chance, FAUNA_REPRO_CHANCE_MIN, FAUNA_REPRO_CHANCE_MAX)
 		if(!prob(chance))
@@ -1840,12 +2817,16 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 
 /datum/controller/subsystem/fauna_ecosystem/proc/is_valid_area(area/A)
 	if(!A) return FALSE
-	if(istype(A, /area/f13/wasteland)) return TRUE
-	if(istype(A, /area/f13/caves)) return TRUE
-	if(istype(A, /area/f13/tunnel)) return TRUE
-	if(istype(A, /area/f13/underground/cave)) return TRUE
-	if(istype(A, /area/f13/building)) return TRUE
-	return FALSE
+	if(!istype(A, /area/f13))
+		return FALSE
+	// Keep ecology out of tightly controlled faction/vault interiors by default.
+	if(istype(A, /area/f13/vault)) return FALSE
+	if(istype(A, /area/f13/brotherhood)) return FALSE
+	if(istype(A, /area/f13/ncr)) return FALSE
+	if(istype(A, /area/f13/legion)) return FALSE
+	if(istype(A, /area/f13/enclave)) return FALSE
+	if(istype(A, /area/f13/followers)) return FALSE
+	return TRUE
 
 /datum/controller/subsystem/fauna_ecosystem/proc/pick_spread_turf(turf/origin, min_dist, max_dist)
 	if(!origin) return null
@@ -2006,6 +2987,14 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 
 		if(debug_logging)
 			log_world("FAUNA: [predator.type] killed [prey.type]")
+		var/turf/kill_turf = get_turf(predator)
+		if(kill_turf)
+			var/habitat = get_habitat_for_turf(kill_turf)
+			var/zkey = zone_key(kill_turf.z, habitat)
+			ensure_zone_state(kill_turf.z, habitat)
+			zone_hunting_pressure[zkey] = clamp((zone_hunting_pressure[zkey] || 0) + (2.5 * hunting_impact_multiplier), FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+			zone_carrion_level[zkey] = clamp((zone_carrion_level[zkey] || 0) + (5 * carrion_attract_multiplier), FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
+			zone_danger_memory[zkey] = clamp((zone_danger_memory[zkey] || 0) + 2.5, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
 
 		rest_timers[mob_key(predator)] = world.time + FAUNA_PREDATOR_REST_AFTER_KILL
 
@@ -2153,10 +3142,24 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		if(!state) state = "none"
 		state_counts[state] += 1
 
+	var/extinction_locks = 0
+	for(var/ekey in extinction_until)
+		var/until = extinction_until[ekey]
+		if(until && until > world.time)
+			extinction_locks++
+
+	var/hot_zones = 0
+	for(var/zkey in zone_danger_memory)
+		if((zone_danger_memory[zkey] || 0) >= 35)
+			hot_zones++
+
 	var/text = "FAUNA DEBUG: states="
 	for(var/s in state_counts)
 		text += "[s]:[state_counts[s]] "
 	text += "| packs=[length(packs)] scents=[length(scent_trails)] safe=[length(safe_spot)] dens=[length(home_quality)] nests=[length(nest_site)] gest=[length(gestation_until)]"
+	text += " | virtual_pop=[get_total_virtual_population()] markers=[length(GLOB.fauna_presets_by_turf)] marker_boot=[length(marker_bootstrap_until)]"
+	text += " | zones_hot=[hot_zones] ext_locks=[extinction_locks]"
+	text += " | tuning(v=[virtual_tick_multiplier] m=[materialize_multiplier] h=[hunting_impact_multiplier] c=[carrion_attract_multiplier])"
 	return text
 
 /datum/controller/subsystem/fauna_ecosystem/proc/cleanup_stale_timers()
@@ -2304,6 +3307,14 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		signal_cd_until -= key
 
 	stale.Cut()
+	for(var/key in marker_bootstrap_until)
+		var/until = marker_bootstrap_until[key]
+		if(!until || until <= world.time)
+			stale += key
+	for(var/key in stale)
+		marker_bootstrap_until -= key
+
+	stale.Cut()
 	for(var/key in home_danger)
 		var/mob/M = get_mob_from_key(key)
 		if(!M || QDELETED(M))
@@ -2411,13 +3422,13 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	id = "radroach"
 	name = "Radroach"
 	mob_type = /mob/living/simple_animal/hostile/radroach
-	hardcap = 160
+	hardcap = 90
 
 /datum/fauna_species/prey/bloatfly
 	id = "bloatfly"
 	name = "Bloatfly"
 	mob_type = /mob/living/simple_animal/hostile/bloatfly
-	hardcap = 145
+	hardcap = 80
 
 /datum/fauna_species/prey/molerat
 	id = "molerat"

@@ -219,3 +219,86 @@
 	. = ..()
 	billboardstaticoverlay = mutable_appearance(icon, "[icon_state]overlay", ABOVE_ALL_MOB_LAYER)
 	add_overlay(billboardstaticoverlay)
+
+/obj/structure/crashed_vertibird
+	name = "crashed vertibird"
+	desc = "The wreckage of a pre-War military aircraft. Its rotors are twisted, and the hull is scorched black from the crash."
+	icon = 'code/modules/f13/256x192_sprites.dmi'
+	icon_state = "Crashed_vertibird"
+	anchored = TRUE
+	density = TRUE
+	bound_width = 256
+	bound_height = 192
+	resistance_flags = INDESTRUCTIBLE
+	layer = ABOVE_MOB_LAYER
+
+/obj/structure/crashed_vertibird/Initialize()
+	. = ..()
+	AddComponent(/datum/component/largetransparency, x_size = 8, y_size = 6)
+
+/obj/structure/forklift
+	name = "forklift"
+	desc = "An old industrial forklift, rusted and long abandoned. The hydraulics are seized solid."
+	icon = 'code/modules/f13/64x64_sprites.dmi'
+	icon_state = "forklift"
+	anchored = TRUE
+	density = TRUE
+	bound_width = 64
+	bound_height = 64
+	resistance_flags = INDESTRUCTIBLE
+	layer = ABOVE_MOB_LAYER
+
+/obj/structure/forklift/Initialize()
+	. = ..()
+	AddComponent(/datum/component/largetransparency, x_size = 2, y_size = 2)
+
+/obj/structure/giant_footstep
+	name = "giant footstep"
+	desc = "A massive footprint embedded in the ground. Whatever left this must have been absolutely colossal."
+	icon = 'code/modules/f13/128x128_sprites.dmi'
+	icon_state = "Giant_footstep"
+	anchored = TRUE
+	density = FALSE
+	bound_width = 128
+	bound_height = 128
+	resistance_flags = INDESTRUCTIBLE
+	layer = TURF_LAYER
+
+/obj/structure/giant_footstep/Initialize()
+	. = ..()
+	AddComponent(/datum/component/largetransparency, x_size = 4, y_size = 4)
+
+/obj/structure/large_vent
+	name = "large vent"
+	desc = "A massive industrial ventilation duct. The metallic surface is covered in rust and grime."
+	icon = 'code/modules/f13/128x32_vents.dmi'
+	icon_state = "Large_vent"
+	anchored = TRUE
+	density = FALSE
+	bound_width = 128
+	bound_height = 32
+	resistance_flags = INDESTRUCTIBLE
+	layer = TURF_LAYER
+
+/obj/structure/large_vent/Initialize()
+	. = ..()
+	AddComponent(/datum/component/largetransparency, x_size = 4, y_size = 1)
+
+/obj/structure/floor_vent
+	name = "floor vent"
+	desc = "A small floor ventilation grate. Air occasionally whistles through the slats."
+	icon = 'code/modules/f13/32x32_floor.dmi'
+	icon_state = "vent1"
+	anchored = TRUE
+	density = FALSE
+	resistance_flags = INDESTRUCTIBLE
+	layer = TURF_LAYER
+
+/obj/structure/floor_vent/vent2
+	icon_state = "vent2"
+
+/obj/structure/floor_vent/vent3
+	icon_state = "vent3"
+
+/obj/structure/floor_vent/vent4
+	icon_state = "vent4"

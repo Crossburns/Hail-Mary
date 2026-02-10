@@ -2,12 +2,7 @@
 // WASTELAND GRID (Fallout 13 / Hail-Mary)
 // v2 PLANT OPS EXPANSION (single-file)
 //
-// Keeps your existing:
-// - online/state/faults/escalation
-// - repair points + multipart consumption
-// - restart ritual + rolling blackouts + background rads
-// - work order board
-//
+// SKIP TO BOTTOM OF FILE FOR GUIDE
 // Adds (ALL IN THIS FILE):
 // - plant process model (reactivity/flow/pressures/steam/turbine/output)
 // - operator setpoints (rods/valves/bypass/relief/target output + SCRAM)
@@ -19,8 +14,6 @@
 //   turbine controller, sensor panel, breaker cabinet, purge valve
 // - procedures: coolant purge (timed, requires valve + pump actions)
 //
-// NOTE: you MUST place the new plant objects on the map for gameplay.
-//       (see "CONCRETE PLANT OBJECTS" section)
 ///////////////////////////////////////////////////////////////
 
 /*
@@ -166,6 +159,8 @@ GLOBAL_VAR(grid_auto_player_threshold)     // active player cutoff
 GLOBAL_VAR(grid_auto_active)               // bool: currently driving controls
 GLOBAL_VAR(grid_auto_last_player_count)    // cached active players
 GLOBAL_VAR(grid_lowpop_faults_threshold)   // below this, suppress random/causal faults + maintenance generation
+GLOBAL_VAR(grid_lowpop_mode_active)        // internal latch for lowpop stability mode
+GLOBAL_VAR(grid_response_scalar)           // control response scalar for faster operator feedback
 GLOBAL_VAR(grid_debug_controls_enabled)    // admin-only toggle that exposes reactor debug actions in TGUI
 
 // Phase 1: Plant upgrade tree + chemistry program + turbine overhaul
@@ -346,6 +341,8 @@ proc/_wasteland_grid_bootstrap()
 	if(isnull(GLOB.grid_auto_active))               GLOB.grid_auto_active = FALSE
 	if(isnull(GLOB.grid_auto_last_player_count))    GLOB.grid_auto_last_player_count = 0
 	if(isnull(GLOB.grid_lowpop_faults_threshold))   GLOB.grid_lowpop_faults_threshold = 20
+	if(isnull(GLOB.grid_lowpop_mode_active))        GLOB.grid_lowpop_mode_active = FALSE
+	if(isnull(GLOB.grid_response_scalar))           GLOB.grid_response_scalar = 1.35
 	if(isnull(GLOB.grid_debug_controls_enabled))    GLOB.grid_debug_controls_enabled = FALSE
 
 	// --- phase 1 ---
@@ -1403,6 +1400,7 @@ proc/_recalc_background_rads()
 	return 1.0 + (0.05 * unfixed) + (0.10 * maxsev)
 
 /proc/_apply_operator_controls()
+	var/response = clamp(GLOB.grid_response_scalar, 0.5, 3.0)
 	// SCRAM overrides everything
 	if(GLOB.grid_scram)
 		GLOB.grid_sp_rod_insertion = 100
@@ -1421,7 +1419,7 @@ proc/_recalc_background_rads()
 
 	// Chemistry system slowly tracks to operator boron target.
 	var/boron_err = GLOB.grid_sp_boron_ppm - GLOB.grid_boron_ppm
-	GLOB.grid_boron_ppm += (boron_err * GRID_K_BORON_TRACK)
+	GLOB.grid_boron_ppm += (boron_err * GRID_K_BORON_TRACK * response)
 	GLOB.grid_boron_ppm = clamp(round(GLOB.grid_boron_ppm), 0, 2000)
 
 /proc/_simulate_reactor_kinetics()
@@ -1508,6 +1506,7 @@ proc/_recalc_background_rads()
 	GLOB.wasteland_grid_core_heat = clamp(round(heat), 0, 100)
 
 /proc/_simulate_hydraulics()
+	var/response = clamp(GLOB.grid_response_scalar, 0.5, 3.0)
 	var/datum/grid_network/prim = grid_get_network("primary")
 	var/datum/grid_network/sec  = grid_get_network("secondary")
 	var/datum/grid_network/fw   = grid_get_network("feedwater")
@@ -1521,14 +1520,14 @@ proc/_recalc_background_rads()
 
 	// Simple pressurizer auto-control loop.
 	if(GLOB.grid_primary_pressure < 95)
-		GLOB.grid_pressurizer_heaters += 3
-		GLOB.grid_pressurizer_spray -= 2
+		GLOB.grid_pressurizer_heaters += round(3 * response)
+		GLOB.grid_pressurizer_spray -= round(2 * response)
 	else if(GLOB.grid_primary_pressure > 135)
-		GLOB.grid_pressurizer_spray += 3
-		GLOB.grid_pressurizer_heaters -= 2
+		GLOB.grid_pressurizer_spray += round(3 * response)
+		GLOB.grid_pressurizer_heaters -= round(2 * response)
 	else
-		GLOB.grid_pressurizer_heaters -= 1
-		GLOB.grid_pressurizer_spray -= 1
+		GLOB.grid_pressurizer_heaters -= round(response)
+		GLOB.grid_pressurizer_spray -= round(response)
 	GLOB.grid_pressurizer_heaters = clamp(round(GLOB.grid_pressurizer_heaters), 0, 100)
 	GLOB.grid_pressurizer_spray = clamp(round(GLOB.grid_pressurizer_spray), 0, 100)
 
@@ -1626,6 +1625,7 @@ proc/_recalc_background_rads()
 		fw.flow = round(50 * fw_eff)
 
 /proc/_simulate_turbine_and_output()
+	var/response = clamp(GLOB.grid_response_scalar, 0.5, 3.0)
 	// Turbine is now governor-driven instead of pure passive pressure-following.
 	var/bypass_dump = (GLOB.grid_sp_bypass / 100) * 60
 	var/rpm = GLOB.grid_turbine_rpm
@@ -1639,7 +1639,7 @@ proc/_recalc_background_rads()
 	var/target_rpm = min(commanded_rpm, steam_drive)
 
 	// Ramp rate limited to avoid rotor stress transients.
-	var/ramp_limit = 8 + round((100 - GLOB.grid_turbine_stress) / 25)
+	var/ramp_limit = round((8 + ((100 - GLOB.grid_turbine_stress) / 25)) * response)
 	var/delta = clamp(target_rpm - rpm, -ramp_limit, ramp_limit)
 	rpm += delta
 
@@ -1940,6 +1940,8 @@ proc/_recalc_background_rads()
 
 	if(GLOB.grid_catastrophe_triggered)
 		return
+	if(_grid_lowpop_suppression_active())
+		return
 	if(!GLOB.grid_safety_interlocks_enabled)
 		return
 	if(!GLOB.wasteland_grid_online)
@@ -2051,6 +2053,56 @@ proc/_recalc_background_rads()
 	if(isnull(players) || players < 0)
 		players = _grid_get_active_players()
 	return (players < threshold)
+
+/proc/_grid_apply_lowpop_stability_mode()
+	_wasteland_grid_bootstrap()
+
+	// Keep operator controls in a safe middle band so lowpop rounds don't get trapped in cascading failures.
+	GLOB.grid_safety_interlocks_enabled = TRUE
+	GLOB.grid_sp_rod_insertion = clamp(GLOB.grid_sp_rod_insertion, 35, 85)
+	GLOB.grid_sp_coolant_valve = max(GLOB.grid_sp_coolant_valve, 65)
+	GLOB.grid_sp_feedwater_valve = max(GLOB.grid_sp_feedwater_valve, 55)
+	GLOB.grid_sp_relief_valve = max(GLOB.grid_sp_relief_valve, 15)
+	GLOB.grid_sp_bypass = clamp(GLOB.grid_sp_bypass, 5, 35)
+	GLOB.grid_sp_turbine_governor = clamp(GLOB.grid_sp_turbine_governor, 30, 75)
+
+	// Smooth dangerous transients back toward stable operation.
+	if(GLOB.wasteland_grid_core_heat > 72)
+		GLOB.wasteland_grid_core_heat = max(55, GLOB.wasteland_grid_core_heat - 3)
+	if(GLOB.grid_primary_pressure > 135)
+		GLOB.grid_primary_pressure = max(100, GLOB.grid_primary_pressure - 6)
+	if(GLOB.grid_decay_heat > 8)
+		GLOB.grid_decay_heat = max(4, GLOB.grid_decay_heat - 0.8)
+	if(GLOB.grid_primary_flow < 45)
+		GLOB.grid_primary_flow = min(55, GLOB.grid_primary_flow + 4)
+	if(GLOB.grid_subcool_margin < 20)
+		GLOB.grid_subcool_margin = min(35, GLOB.grid_subcool_margin + 3)
+	if(GLOB.grid_npsh_margin < 25)
+		GLOB.grid_npsh_margin = min(40, GLOB.grid_npsh_margin + 3)
+	GLOB.grid_catastrophe_risk = max(0, GLOB.grid_catastrophe_risk - 6)
+
+	// Keep low-pop rounds playable: automatically recover from non-catastrophic trips.
+	if(!GLOB.grid_catastrophe_triggered && !GLOB.wasteland_grid_online)
+		GLOB.grid_scram = FALSE
+		set_wasteland_grid_online(TRUE)
+
+	// Auto-clear unfixed faults so breaker/fault loops don't spam lowpop rounds.
+	var/cleared = 0
+	for(var/datum/wasteland_grid_fault/F in GLOB.wasteland_grid_faults)
+		if(!F || F.fixed)
+			continue
+		F.fixed = TRUE
+		cleared++
+	if(cleared > 0)
+		_announce_grid("WASTELAND GRID: Low-pop stability mode auto-cleared [cleared] fault(s).")
+		_recalc_wasteland_grid_state()
+		_recalc_background_rads()
+
+	// Clear timed outage timers (do not touch intentionally forced district shutdowns).
+	_wasteland_grid_bootstrap_districts()
+	for(var/district in GLOB.wasteland_grid_district_off_until)
+		GLOB.wasteland_grid_district_off_until[district] = world.time
+	_grid_reconcile_district_power()
 
 /proc/_grid_upgrade_level(key)
 	if(!istext(key) || !islist(GLOB.grid_plant_upgrades))
@@ -2557,6 +2609,13 @@ SUBSYSTEM_DEF(wasteland_grid)
 /datum/controller/subsystem/wasteland_grid/fire(resumed)
 	_wasteland_grid_bootstrap()
 	_grid_get_active_players()
+	var/lowpop_mode = _grid_lowpop_suppression_active()
+	if(lowpop_mode != !!GLOB.grid_lowpop_mode_active)
+		GLOB.grid_lowpop_mode_active = lowpop_mode
+		if(lowpop_mode)
+			_announce_grid("WASTELAND GRID: Low-pop stability mode engaged. Faults/maintenance/blackouts suppressed.")
+		else
+			_announce_grid("WASTELAND GRID: Low-pop stability mode disengaged. Full simulation pressure restored.")
 	// procedures must advance even if nobody is using the console
 	grid_tick_procedures()
 
@@ -2565,11 +2624,16 @@ SUBSYSTEM_DEF(wasteland_grid)
 		GLOB.wasteland_grid_fuel = max(0, GLOB.wasteland_grid_fuel - fuel_drain_per_tick)
 		GLOB.wasteland_grid_coolant = max(0, GLOB.wasteland_grid_coolant - coolant_drain_per_tick)
 
-		if(GLOB.wasteland_grid_fuel < min_fuel_to_run || GLOB.wasteland_grid_coolant < min_coolant_to_run)
+		if(lowpop_mode)
+			// Never hard-fail on low-pop: keep the training/sandbox loop online.
+			GLOB.wasteland_grid_fuel = max(GLOB.wasteland_grid_fuel, min_fuel_to_run)
+			GLOB.wasteland_grid_coolant = max(GLOB.wasteland_grid_coolant, min_coolant_to_run)
+		else if(GLOB.wasteland_grid_fuel < min_fuel_to_run || GLOB.wasteland_grid_coolant < min_coolant_to_run)
 			_trip_grid("Resource failure (fuel/coolant)")
 
-	// Neglect escalation always
-	_escalate_faults_if_neglected()
+	// Neglect escalation is suppressed during low-pop stability mode.
+	if(!lowpop_mode)
+		_escalate_faults_if_neglected()
 	_grid_run_automation()
 
 	// v2 PHASE ORDER
@@ -2578,15 +2642,18 @@ SUBSYSTEM_DEF(wasteland_grid)
 	_simulate_thermal()
 	_simulate_hydraulics()
 	_simulate_turbine_and_output()
-	_update_wear_and_chemistry()
-	_grid_tick_turbine_condition()
-	_grid_tick_spent_fuel_and_waste()
-	_grid_theft_tick()
-	_update_alarms_and_fault_triggers()
-	_run_safety_interlocks()
-	_update_catastrophe_risk()
-	_spawn_maintenance_tasks()
-	_grid_dispatch_tick()
+	if(lowpop_mode)
+		_grid_apply_lowpop_stability_mode()
+	else
+		_update_wear_and_chemistry()
+		_grid_tick_turbine_condition()
+		_grid_tick_spent_fuel_and_waste()
+		_grid_theft_tick()
+		_update_alarms_and_fault_triggers()
+		_run_safety_interlocks()
+		_update_catastrophe_risk()
+		_spawn_maintenance_tasks()
+		_grid_dispatch_tick()
 
 	if(GLOB.grid_auction_open_until <= 0)
 		_grid_start_auction()
@@ -2605,7 +2672,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 		return
 
 	// Rolling blackouts (existing, RED only)
-	if(GLOB.wasteland_grid_online && GLOB.wasteland_grid_state == "RED")
+	if(!lowpop_mode && GLOB.wasteland_grid_online && GLOB.wasteland_grid_state == "RED")
 		var/d = _grid_pick_random_district()
 		if(d && _grid_is_district_on(d))
 			_grid_set_district_off(d, rand(GRID_RED_OUTAGE_MIN, GRID_RED_OUTAGE_MAX))
@@ -2628,6 +2695,8 @@ SUBSYSTEM_DEF(wasteland_grid)
 ///////////////////////////////////////////////////////////////
 
 /proc/_trip_grid(reason)
+	if(_grid_lowpop_suppression_active() && !GLOB.grid_catastrophe_triggered)
+		return
 	if(!GLOB.wasteland_grid_online)
 		return
 
@@ -2648,7 +2717,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/item/f13/grid_fuel
 	name = "fuel rod"
 	desc = "A heavy sealed fuel rod. Feeds the Mass Fusion plant."
-	icon = 'icons/obj/machines/antimatter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "jar"
 	w_class = WEIGHT_CLASS_BULKY
 	var/fuel_value = 25
@@ -2656,7 +2725,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/item/f13/grid_coolant
 	name = "coolant canister"
 	desc = "A pressurized coolant canister."
-	icon = 'icons/obj/machines/antimatter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "box"
 	w_class = WEIGHT_CLASS_BULKY
 	var/coolant_value = 25
@@ -2788,7 +2857,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 
 /obj/structure/wasteland_grid/repair_point
 	name = "grid repair point"
-	icon = 'fallout/eris/icons/Reactor_32x32.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Breaker_cabinet_closed"
 	anchored = TRUE
 	density = TRUE
@@ -2945,7 +3014,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/wasteland_grid/repair_point
 	name = "coolant pump station"
 	desc = "A pump manifold with valves and pressure gauges."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Primary_pump"
 	pixel_x = -32
 	pixel_y = -32
@@ -2957,7 +3026,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/wasteland_grid/repair_point
 	name = "control bus rack"
 	desc = "A tangled rack of control cables and relays."
-	icon = 'icons/obj/machines/telecomms.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "comm_server_o"
 	repair_key = "control"
 
@@ -2967,7 +3036,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/grid_radiation_source
 	name = "mass fusion reactor core"
 	desc = "The reactor core housing. It hums when the grid is online."
-	icon = 'fallout/eris/icons/128x128_reactor.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Reactor_off"
 	anchored = TRUE
 	density = TRUE
@@ -2991,14 +3060,14 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/grid_radiation_source/proc/_desired_visual_state()
 	if(GLOB.grid_catastrophe_triggered)
 		return "destroyed"
-	if(GLOB.wasteland_grid_containment <= 15 || GLOB.wasteland_grid_integrity <= 15)
-		return "destroyed"
 	if(GLOB.wasteland_grid_online)
 		return "on"
 	return "off"
 
 /obj/structure/f13/grid_radiation_source/proc/sync_visual_and_audio(force = FALSE, allow_sfx = TRUE)
+	// --- FIX: Ensure 'var/' is present and this line is NOT inside an if() block ---
 	var/desired = _desired_visual_state()
+	// -----------------------------------------------------------------------------
 
 	if(force || desired != last_visual_state)
 		switch(desired)
@@ -3036,7 +3105,6 @@ SUBSYSTEM_DEF(wasteland_grid)
 	else
 		playsound(src, 'sound/f13machines/engine_running3.ogg', 45, 1)
 	next_hum_at = world.time + rand(14 SECONDS, 20 SECONDS)
-
 /obj/structure/grid/base
 	name = "grid component"
 	anchored = TRUE
@@ -3058,7 +3126,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "valve"
 	desc = "A manual valve with a crusty handwheel."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "coolant valve"
 	pixel_x = -32
 	pixel_y = -32
@@ -3104,7 +3172,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/grid/pump
 	name = "grid pump"
 	desc = "A heavy pump. Sounds like it wants lubrication."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Main_Primary_Pump"
 	pixel_x = -32
 	pixel_y = -32
@@ -3205,7 +3273,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "relief valve"
 	desc = "A safety relief valve. Lift test it or it will betray you."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Relief_valve"
 	pixel_x = -32
 	pixel_y = -32
@@ -3274,7 +3342,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "filter unit"
 	desc = "A coolant filter skid. Ignore it and your coolant turns to soup."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Filter_unit"
 	pixel_x = -32
 	pixel_y = -32
@@ -3336,7 +3404,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "heat exchanger"
 	desc = "A battered exchanger. Descale it or steam quality drops."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Heat_exchanger"
 	pixel_x = -32
 	pixel_y = -32
@@ -3386,7 +3454,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "turbine assembly"
 	desc = "The main steam turbine train. It needs regular mechanical service."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Turbine_main"
 	pixel_x = -32
 	pixel_y = -32
@@ -3523,8 +3591,8 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/grid/turbine_controller
 	name = "turbine controller"
 	desc = "Sets load and bypass. Overspeed this and it'll trip."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	anchored = TRUE
 	density = TRUE
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
@@ -3542,7 +3610,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 		if(_grid_try_set_icon_state(src, list("control_destroyed", "control_off")))
 			set_light(2, 0.9, "#FF9B3A")
 			return
-	icon_state = "control_on"
+	icon_state = "terminal_vault"
 	if(GLOB.wasteland_grid_online)
 		var/ctrl_color = (GLOB.wasteland_grid_state == "RED") ? "#FF5E5E" : "#79C8FF"
 		set_light(2, 0.5, ctrl_color)
@@ -3690,7 +3758,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "instrumentation panel"
 	desc = "Calibration bay. Drift lives here."
-	icon = 'icons/obj/machines/telecomms.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "comm_server_o"
 
 /obj/structure/grid/sensor_panel/examine(mob/user)
@@ -3738,8 +3806,8 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "district power relay"
 	desc = "A high-voltage relay node feeding one faction district. Sabotage this to hard-cut that district."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	var/district = null
 	max_integrity = 100
 	var/integrity = 100
@@ -3770,7 +3838,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	return (!sabotaged && integrity > 0)
 
 /obj/structure/grid/power_relay/proc/_sync_icon_state()
-	icon_state = is_online() ? "control_on" : "control_off"
+	icon_state = "terminal_vault"
 
 /obj/structure/grid/power_relay/proc/set_sabotaged(state = TRUE, reason = null)
 	sabotaged = !!state
@@ -3843,19 +3911,771 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "relay tower"
 	desc = "A tall transmission tower from the old world. Decorative, but imposing."
-	icon = 'icons/Relay_Tower.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	density = TRUE
 	anchored = TRUE
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+
+/obj/structure/wasteland_grid/west_tek_turbine
+	name = "west tek turbine stack"
+	desc = "A pre-war West Tek turbine stack in rough shape. The housing is seized, the service ports are rusted, and it clearly needs work."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = ""
+	anchored = TRUE
+	density = TRUE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+	// 128x320 icon, centered horizontally on the tile and rising upward.
+	pixel_x = -48
+	pixel_y = 0
+
+/obj/structure/wasteland_grid/turbine_deco
+	name = "turbine"
+	desc = "A large industrial turbine from the old world."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "Turbine_deco"
+	anchored = TRUE
+	density = TRUE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+	// 128x320 icon, centered horizontally on the tile and rising upward.
+	pixel_x = -48
+	pixel_y = 0
+
+/obj/structure/wasteland_grid/west_tek_floor_sign
+	name = "west tek floor sign"
+	desc = "A faded West Tek floor marking from before the bombs."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "West_tek_sign"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
+	// Keep this on the floor, but above most turf overlays (sand/decal passes)
+	// so it doesn't appear to "vanish" during weather/decal updates.
+	layer = ABOVE_NORMAL_TURF_LAYER
+	plane = FLOOR_PLANE
+	// 96x96 icon, centered around the placement tile.
+	pixel_x = -32
+	pixel_y = -32
+
+/obj/structure/wasteland_grid/large_vent
+	name = "large vent"
+	desc = "A large industrial ventilation unit from before the war."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "Large_vent"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x32 icon, centered horizontally on the tile.
+	pixel_x = -48
+	pixel_y = 0
+
+/obj/structure/wasteland_grid/floor_vent1
+	name = "floor vent"
+	desc = "A small floor vent grate."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "Vent1"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	layer = ABOVE_NORMAL_TURF_LAYER
+	plane = FLOOR_PLANE
+
+/obj/structure/wasteland_grid/floor_vent2
+	name = "floor vent"
+	desc = "A small floor vent grate."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "vent2"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	layer = ABOVE_NORMAL_TURF_LAYER
+	plane = FLOOR_PLANE
+
+/obj/structure/wasteland_grid/floor_vent3
+	name = "floor vent"
+	desc = "A small floor vent grate."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "vent3"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	layer = ABOVE_NORMAL_TURF_LAYER
+	plane = FLOOR_PLANE
+
+/obj/structure/wasteland_grid/floor_vent4
+	name = "floor vent"
+	desc = "A small floor vent grate."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "vent4"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	layer = ABOVE_NORMAL_TURF_LAYER
+	plane = FLOOR_PLANE
+
+/obj/structure/wasteland_grid/giant_footstep
+	name = "giant footstep"
+	desc = "A massive footprint pressed deep into the earth. Whatever made this was enormous."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "Giant_footstep"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	layer = ABOVE_NORMAL_TURF_LAYER
+	plane = FLOOR_PLANE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/crashed_vertibird
+	name = "crashed vertibird"
+	desc = "The burnt-out husk of a pre-war Vertibird. It won't be flying again."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "Crashed_vertibird"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 256x192 icon, centered on placement tile.
+	pixel_x = -112
+	pixel_y = -80
+
+/obj/structure/wasteland_grid/road_gate
+	name = "road gate"
+	desc = "A heavy barricade gate meant to block vehicle traffic."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "RoadGate"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 160x32 icon, centered horizontally on the tile.
+	pixel_x = -64
+	pixel_y = 0
+
+/obj/structure/wasteland_grid/rock_rb1
+	name = "large rock"
+	desc = "A massive boulder blocking the way."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb1"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb2
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb2"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb3
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb3"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb4
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb4"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb5
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb5"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb6
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb6"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb7
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb7"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_rb8
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "rb8"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 128x128 icon, centered on placement tile.
+	pixel_x = -48
+	pixel_y = -48
+
+/obj/structure/wasteland_grid/rock_r1
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "R1"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 64x64 icon, centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/rock_r2
+	name = "large rock"
+	desc = "A massive boulder blocking the way."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "R2"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 64x64 icon, centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/rock_r3
+	name = "rock formation"
+	desc = "A cluster of weathered rocks."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "R3"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 64x64 icon, centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/rock_r4
+	name = "large rock"
+	desc = "A massive boulder blocking the way."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "R4"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 64x64 icon, centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/rock_r5
+	name = "large rock"
+	desc = "A massive boulder blocking the way."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "R5"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 64x64 icon, centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/rock_r6
+	name = "large rock"
+	desc = "A massive boulder blocking the way."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "R7"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	// 64x64 icon, centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/fev_pod
+	name = "West Tek FEV pod"
+	desc = "An old containment pod once used for FEV processing. It looks inactive."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "FEV_pod"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	
+	pixel_x = 0
+	pixel_y = 0
+
+/obj/structure/wasteland_grid/west_tek_billboard
+	name = "West Tek billboard"
+	desc = "A battered pre-war West Tek billboard."
+	icon = GRID_FACTION_ASSET_DMI
+	
+	icon_state = "WestTek_billboard"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 224x128 icon, centered on placement tile and rising upward.
+	pixel_x = -96
+	pixel_y = 0
+
+/obj/structure/wasteland_grid/server_deco
+	name = "high-power server"
+	desc = "A high-power server rack from the old world, still humming with pre-war guts."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "Server_deco"
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 64x64 icon centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+
+/obj/structure/wasteland_grid/power_armor_holder
+	name = "power armor holder"
+	desc = "A reinforced equipment cradle for parking a power armor chassis."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "PA_holder_empty"
+	
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	// 64x64 icon centered on placement tile.
+	pixel_x = -16
+	pixel_y = -16
+	var/obj/item/stored_item = null
+	/// Mapper override: allow any item, not just power armor suits.
+	var/allow_non_pa_items = FALSE
+
+/obj/structure/wasteland_grid/power_armor_holder/Initialize()
+	. = ..()
+	if(!stored_item)
+		for(var/obj/item/I in contents)
+			stored_item = I
+			break
+	_sync_holder_icon()
+
+/obj/structure/wasteland_grid/power_armor_holder/proc/_sync_holder_icon()
+	icon_state = stored_item ? "PA_holder_occupied" : "PA_holder_empty"
+
+/obj/structure/wasteland_grid/power_armor_holder/attack_hand(mob/user)
+	. = ..()
+	if(!user)
+		return TRUE
+	if(!stored_item)
+		to_chat(user, span_notice("The holder is empty."))
+		return TRUE
+
+	var/obj/item/I = stored_item
+	stored_item = null
+	I.forceMove(drop_location())
+	if(!user.put_in_hands(I))
+		to_chat(user, span_notice("You remove [I] from the holder."))
+	_sync_holder_icon()
+	return TRUE
+
+/obj/structure/wasteland_grid/power_armor_holder/attackby(obj/item/W, mob/user, params)
+	. = ..()
+	if(!W || !user)
+		return TRUE
+	if(stored_item)
+		to_chat(user, span_warning("The holder is already occupied."))
+		return TRUE
+	if(!allow_non_pa_items && !istype(W, /obj/item/clothing/suit/armor/power_armor))
+		to_chat(user, span_warning("Only power armor suits fit in this holder."))
+		return TRUE
+	if(!user.transferItemToLoc(W, src))
+		to_chat(user, span_warning("You can't place [W] into the holder right now."))
+		return TRUE
+
+	stored_item = W
+	_sync_holder_icon()
+	to_chat(user, span_notice("You place [W] into the holder."))
+	return TRUE
+
+/obj/structure/f13/invisible_blocker
+	name = ""
+	desc = ""
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "nothing"
+	anchored = TRUE
+	density = TRUE
+	opacity = FALSE
+	invisibility = INVISIBILITY_MAXIMUM
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+
+/obj/structure/f13/invisible_blocker/examine(mob/user)
+	return list()
+
+/obj/structure/f13/fev_vat
+	name = "West Tek FEV vat"
+	desc = "A pre-war FEV immersion vat. The glass is stained and the slurry still bubbles."
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "FEV_VAT"
+	anchored = TRUE
+	density = FALSE
+	pixel_x = -64
+	pixel_y = 0
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+	var/allow_mutation = TRUE
+	var/busy = FALSE
+	var/self_mutation_time_ds = 40
+	var/forced_mutation_time_ds = 60
+	var/glow_range = 3.2
+	var/glow_power = 1.15
+	var/glow_color = "#62FF7C"
+
+	// Ambient music vars (far range - 50 tiles)
+	var/music_range = 50
+	var/music_file = 'sound/f13music/vats_of_goo.ogg'
+	var/music_volume = 40
+	var/music_channel = 9
+	var/fade_in_time = 30
+	var/fade_out_time = 40
+	var/cooldown_time = 100
+	var/list/active_music_players = list()
+	var/list/cooldown_music_players = list()
+
+	// Close-range bubbling sound vars (10 tiles)
+	var/bubbles_range = 10
+	var/bubbles_file = 'sound/f13music/Bubbles.ogg'
+	var/bubbles_volume = 50
+	var/bubbles_channel = 10
+	var/bubbles_fade_in_time = 20
+	var/bubbles_fade_out_time = 30
+	var/bubbles_cooldown_time = 100
+	var/list/active_bubbles_players = list()
+	var/list/cooldown_bubbles_players = list()
+
+/obj/structure/f13/fev_vat/Initialize()
+	. = ..()
+	_sync_glow()
+	START_PROCESSING(SSobj, src)
+
+/obj/structure/f13/fev_vat/proc/_sync_glow()
+	if(allow_mutation)
+		set_light(glow_range, glow_power, glow_color)
+	else
+		// Keep an inert decorative vat visible, but softer.
+		set_light(2.4, 0.65, glow_color)
+
+/obj/structure/f13/fev_vat/deco
+	allow_mutation = FALSE
+	desc = "A pre-war FEV immersion vat."
+	music_file = null  // No music for decorative vats
+	bubbles_file = null  // No bubbles for decorative vats
+
+/obj/structure/f13/fev_vat/examine(mob/user)
+	. = ..()
+	if(allow_mutation)
+		. += span_warning("It looks unstable enough that someone could jump in.")
+	else
+		. += span_notice("Its control stack is dead.")
+
+/obj/structure/f13/fev_vat/attack_hand(mob/user)
+	. = ..()
+	if(!user)
+		return TRUE
+	if(!allow_mutation)
+		to_chat(user, span_notice("This vat is inert."))
+		return TRUE
+	if(busy)
+		to_chat(user, span_warning("The vat is already processing someone."))
+		return TRUE
+
+	if(isliving(user.pulling) && user.grab_state >= GRAB_AGGRESSIVE)
+		var/mob/living/target = user.pulling
+		var/choice_force = alert(user, "Force [target] into the FEV vat?", name, "Force In", "Cancel")
+		if(choice_force == "Force In")
+			_attempt_fev_dip(user, target, TRUE)
+		return TRUE
+
+	var/choice = alert(user, "The slurry inside is active FEV. Jump in?", name, "Jump In", "Cancel")
+	if(choice == "Jump In")
+		_attempt_fev_dip(user, user, FALSE)
+	return TRUE
+
+/obj/structure/f13/fev_vat/proc/_attempt_fev_dip(mob/user, mob/living/target, forced = FALSE)
+	if(!allow_mutation || busy || !user || !target)
+		return FALSE
+	if(!ishuman(target))
+		to_chat(user, span_warning("The vat only works on human-compatible biology."))
+		return FALSE
+
+	var/mob/living/carbon/human/H = target
+	if(is_species(H, /datum/species/smutant))
+		to_chat(user, span_notice("[H] is already a super mutant."))
+		return FALSE
+
+	if(get_dist(user, src) > 1 || get_dist(H, src) > 1)
+		to_chat(user, span_warning("Get closer to the vat first."))
+		return FALSE
+
+	if(forced && (user.pulling != H || user.grab_state < GRAB_AGGRESSIVE))
+		to_chat(user, span_warning("You need an aggressive grab to force someone in."))
+		return FALSE
+
+	busy = TRUE
+	if(forced)
+		user.visible_message(span_danger("[user] starts forcing [H] into [src]!"), span_danger("You force [H] toward the vat."))
+		to_chat(H, span_userdanger("[user] tries to force you into [src]!"))
+	else
+		user.visible_message(span_warning("[user] climbs into [src]!"), span_userdanger("You climb into the FEV slurry..."))
+
+	var/delay_ds = forced ? forced_mutation_time_ds : self_mutation_time_ds
+	if(!do_after(user, delay_ds, target = H))
+		busy = FALSE
+		if(user)
+			to_chat(user, span_warning("FEV exposure sequence interrupted."))
+		return FALSE
+
+	if(!allow_mutation || !H || QDELETED(H))
+		busy = FALSE
+		return FALSE
+	if(get_dist(user, src) > 1 || get_dist(H, src) > 1)
+		busy = FALSE
+		return FALSE
+	if(forced && (user.pulling != H || user.grab_state < GRAB_AGGRESSIVE))
+		busy = FALSE
+		if(user)
+			to_chat(user, span_warning("You lose your grip before immersion completes."))
+		return FALSE
+
+	H.forceMove(get_turf(src))
+	H.visible_message(span_danger("[H] is submerged in active FEV!"), span_userdanger("The FEV tears through your body!"))
+
+	var/datum/disease/transformation/mutant/super/D = new
+	D.do_disease_transformation(H)
+
+	busy = FALSE
+	return TRUE
+
+/obj/structure/f13/fev_vat/Destroy()
+	STOP_PROCESSING(SSobj, src)
+	// Clean up all active music
+	for(var/ckey in active_music_players)
+		for(var/mob/living/L in GLOB.player_list)
+			if(L.ckey == ckey && L.client)
+				var/sound/S = sound(null)
+				S.channel = music_channel
+				SEND_SOUND(L, S)
+				break
+	// Clean up bubbles sound
+	for(var/ckey in active_bubbles_players)
+		for(var/mob/living/L in GLOB.player_list)
+			if(L.ckey == ckey && L.client)
+				var/sound/B = sound(null)
+				B.channel = bubbles_channel
+				SEND_SOUND(L, B)
+				break
+	active_music_players.Cut()
+	cooldown_music_players.Cut()
+	active_bubbles_players.Cut()
+	cooldown_bubbles_players.Cut()
+	return ..()
+
+/obj/structure/f13/fev_vat/process()
+	// Handle ambient music (50 tiles)
+	if(music_file)
+		var/list/nearby_players = list()
+		for(var/mob/living/L in range(music_range, src))
+			if(L.client && L.ckey)
+				nearby_players[L.ckey] = L
+
+		for(var/ckey in nearby_players)
+			if(!active_music_players[ckey] && !cooldown_music_players[ckey])
+				start_music_for_player(nearby_players[ckey])
+
+		for(var/ckey in active_music_players)
+			if(!(ckey in nearby_players))
+				for(var/mob/living/L in GLOB.player_list)
+					if(L.ckey == ckey)
+						stop_music_for_player(L)
+						break
+
+	// Handle bubbles sound (10 tiles)
+	if(bubbles_file)
+		var/list/nearby_bubbles = list()
+		for(var/mob/living/L in range(bubbles_range, src))
+			if(L.client && L.ckey)
+				nearby_bubbles[L.ckey] = L
+
+		for(var/ckey in nearby_bubbles)
+			if(!active_bubbles_players[ckey] && !cooldown_bubbles_players[ckey])
+				start_bubbles_for_player(nearby_bubbles[ckey])
+
+		for(var/ckey in active_bubbles_players)
+			if(!(ckey in nearby_bubbles))
+				for(var/mob/living/L in GLOB.player_list)
+					if(L.ckey == ckey)
+						stop_bubbles_for_player(L)
+						break
+
+/obj/structure/f13/fev_vat/proc/start_music_for_player(mob/living/player)
+	if(!player || !player.client || !music_file)
+		return
+	if(!(player.client.prefs.toggles & SOUND_MIDI))
+		return
+
+	active_music_players[player.ckey] = TRUE
+	var/sound/S = sound(music_file)
+	S.channel = music_channel
+	S.repeat = TRUE
+	S.wait = 0
+	S.volume = 0
+	SEND_SOUND(player, S)
+
+	spawn(0)
+		if(fade_in_time > 0)
+			var/steps = 10
+			var/step_time = fade_in_time / steps
+			var/volume_per_step = music_volume / steps
+			for(var/i in 1 to steps)
+				if(!player || !player.client || !active_music_players[player.ckey])
+					return
+				var/sound/fade = sound(null)
+				fade.channel = music_channel
+				fade.volume = volume_per_step * i
+				SEND_SOUND(player, fade)
+				sleep(step_time)
+		else
+			if(player && player.client)
+				var/sound/instant = sound(null)
+				instant.channel = music_channel
+				instant.volume = music_volume
+				SEND_SOUND(player, instant)
+
+/obj/structure/f13/fev_vat/proc/stop_music_for_player(mob/living/player)
+	if(!player || !player.ckey || !active_music_players[player.ckey])
+		return
+
+	active_music_players -= player.ckey
+
+	spawn(0)
+		if(fade_out_time > 0 && player.client)
+			var/steps = 10
+			var/step_time = fade_out_time / steps
+			var/volume_per_step = music_volume / steps
+			for(var/i in 1 to steps)
+				if(!player || !player.client)
+					break
+				var/sound/fade = sound(null)
+				fade.channel = music_channel
+				fade.volume = music_volume - (volume_per_step * i)
+				SEND_SOUND(player, fade)
+				sleep(step_time)
+
+		if(player && player.client)
+			var/sound/S = sound(null)
+			S.channel = music_channel
+			SEND_SOUND(player, S)
+
+	cooldown_music_players[player.ckey] = TRUE
+	addtimer(CALLBACK(src, PROC_REF(clear_music_cooldown), player.ckey), cooldown_time)
+
+/obj/structure/f13/fev_vat/proc/clear_music_cooldown(ckey)
+	cooldown_music_players -= ckey
+
+/obj/structure/f13/fev_vat/proc/start_bubbles_for_player(mob/living/player)
+	if(!player || !player.client || !bubbles_file)
+		return
+	if(!(player.client.prefs.toggles & SOUND_MIDI))
+		return
+
+	active_bubbles_players[player.ckey] = TRUE
+	var/sound/B = sound(bubbles_file)
+	B.channel = bubbles_channel
+	B.repeat = TRUE
+	B.wait = 0
+	B.volume = 0
+	SEND_SOUND(player, B)
+
+	spawn(0)
+		if(bubbles_fade_in_time > 0)
+			var/steps = 10
+			var/step_time = bubbles_fade_in_time / steps
+			var/volume_per_step = bubbles_volume / steps
+			for(var/i in 1 to steps)
+				if(!player || !player.client || !active_bubbles_players[player.ckey])
+					return
+				var/sound/fade = sound(null)
+				fade.channel = bubbles_channel
+				fade.volume = volume_per_step * i
+				SEND_SOUND(player, fade)
+				sleep(step_time)
+		else
+			if(player && player.client)
+				var/sound/instant = sound(null)
+				instant.channel = bubbles_channel
+				instant.volume = bubbles_volume
+				SEND_SOUND(player, instant)
+
+/obj/structure/f13/fev_vat/proc/stop_bubbles_for_player(mob/living/player)
+	if(!player || !player.ckey || !active_bubbles_players[player.ckey])
+		return
+
+	active_bubbles_players -= player.ckey
+
+	spawn(0)
+		if(bubbles_fade_out_time > 0 && player.client)
+			var/steps = 10
+			var/step_time = bubbles_fade_out_time / steps
+			var/volume_per_step = bubbles_volume / steps
+			for(var/i in 1 to steps)
+				if(!player || !player.client)
+					break
+				var/sound/fade = sound(null)
+				fade.channel = bubbles_channel
+				fade.volume = bubbles_volume - (volume_per_step * i)
+				SEND_SOUND(player, fade)
+				sleep(step_time)
+
+		if(player && player.client)
+			var/sound/B = sound(null)
+			B.channel = bubbles_channel
+			SEND_SOUND(player, B)
+
+	cooldown_bubbles_players[player.ckey] = TRUE
+	addtimer(CALLBACK(src, PROC_REF(clear_bubbles_cooldown), player.ckey), bubbles_cooldown_time)
+
+/obj/structure/f13/fev_vat/proc/clear_bubbles_cooldown(ckey)
+	cooldown_bubbles_players -= ckey
 
 /obj/structure/grid/backup_generator
 	parent_type = /obj/structure/grid/base
 	name = "district backup generator"
 	desc = "A uranium-hungry emergency generator that can keep one district powered if the main grid drops."
-	icon = 'fallout/eris/icons/96x96.dmi'
-	icon_state = "Backup_Generator"
-	pixel_x = -32
-	pixel_y = -32
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "generator_off"
+	pixel_x = -16
+	pixel_y = -16
 	var/district = null
 	var/active = FALSE
 	var/fuel = 0
@@ -3885,17 +4705,10 @@ SUBSYSTEM_DEF(wasteland_grid)
 
 /obj/structure/grid/backup_generator/proc/sync_visual_state()
 	if(is_active())
-		if(_grid_try_set_icon_state(src, list("Backup_Generator_on", "Backup_Generator_active", "Backup_Generator")))
-			set_light(3, 0.95, "#FFB85C")
-			return
-	else
-		if(_grid_try_set_icon_state(src, list("Backup_Generator_off", "Backup_Generator")))
-			set_light(0)
-			return
-	icon_state = "Backup_Generator"
-	if(is_active())
+		icon_state = "generator_on"
 		set_light(3, 0.95, "#FFB85C")
 	else
+		icon_state = "generator_off"
 		set_light(0)
 
 /obj/structure/grid/backup_generator/proc/start_generator()
@@ -3994,7 +4807,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "relay breaker box"
 	desc = "Local isolation breaker for a district relay."
-	icon = 'fallout/eris/icons/Reactor_32x32.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Breaker_cabinet_closed"
 	var/district = null
 
@@ -4033,7 +4846,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "breaker cabinet"
 	desc = "High-current breakers. District load lives here."
-	icon = 'fallout/eris/icons/Reactor_32x32.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "Breaker_cabinet_closed"
 	var/district = null
 
@@ -4075,8 +4888,8 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "district load controller"
 	desc = "Routes reactor power to a specific district without touching the full grid."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	var/district = null
 	var/default_outage_seconds = 90
 
@@ -4149,13 +4962,14 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_relay_console
 	name = "relay operations console"
 	desc = "Monitors and controls one district power relay."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
 	idle_power_usage = 0
 	active_power_usage = 0
 	interaction_flags_machine = INTERACT_MACHINE_OFFLINE | INTERACT_MACHINE_WIRES_IF_OPEN | INTERACT_MACHINE_ALLOW_SILICON | INTERACT_MACHINE_OPEN_SILICON | INTERACT_MACHINE_SET_MACHINE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	var/district = null
 
 /obj/machinery/f13/grid_relay_console/bos
@@ -4181,7 +4995,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_relay_console/power_change()
 	. = ..()
 	stat &= ~NOPOWER
-	icon_state = "control_on"
+	icon_state = "terminal_vault"
 
 /obj/machinery/f13/grid_relay_console/proc/get_district_id()
 	if(istext(district) && district)
@@ -4223,13 +5037,14 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_faction_district_console
 	name = "district dispatch console"
 	desc = "Reactor-side console for routing BOS, NCR, Legion, Town, and Mass Fusion district power."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
 	idle_power_usage = 0
 	active_power_usage = 0
 	interaction_flags_machine = INTERACT_MACHINE_OFFLINE | INTERACT_MACHINE_WIRES_IF_OPEN | INTERACT_MACHINE_ALLOW_SILICON | INTERACT_MACHINE_OPEN_SILICON | INTERACT_MACHINE_SET_MACHINE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	var/default_outage_seconds = 90
 	var/list/faction_districts = list(
 		"BOS" = "BOS",
@@ -4268,7 +5083,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_faction_district_console/power_change()
 	. = ..()
 	stat &= ~NOPOWER
-	icon_state = "control_on"
+	icon_state = "terminal_vault"
 
 /obj/machinery/f13/grid_faction_district_console/proc/get_district_for_faction(faction_name)
 	if(!istext(faction_name) || !faction_name)
@@ -4381,7 +5196,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 	parent_type = /obj/structure/grid/base
 	name = "purge valve"
 	desc = "A purge valve for flushing contaminated coolant."
-	icon = 'fallout/eris/icons/96x96.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "coolant valve"
 	pixel_x = -32
 	pixel_y = -32
@@ -4461,13 +5276,14 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/wasteland_grid_console
 	name = "Mass Fusion grid console"
 	desc = "Controls the wasteland electrical grid."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
 	idle_power_usage = 0
 	active_power_usage = 0
 	interaction_flags_machine = INTERACT_MACHINE_OFFLINE | INTERACT_MACHINE_WIRES_IF_OPEN | INTERACT_MACHINE_ALLOW_SILICON | INTERACT_MACHINE_OPEN_SILICON | INTERACT_MACHINE_SET_MACHINE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 
 /obj/machinery/f13/wasteland_grid_console/Initialize()
 	. = ..()
@@ -4476,12 +5292,22 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/wasteland_grid_console/power_change()
 	. = ..()
 	stat &= ~NOPOWER
-	icon_state = "control_on"
+	icon_state = "terminal_vault"
 
 /obj/machinery/f13/wasteland_grid_console/attack_hand(mob/user)
 	. = ..()
 	if(!user) return
 	ui_interact(user, null)
+
+/obj/machinery/f13/wasteland_grid_console/attackby(obj/item/W, mob/user, params)
+	if(istype(W, /obj/item/pda))
+		var/obj/item/pda/P = W
+		if(P.has_mod("gridlink"))
+			P.link_wasteland_grid(src, user)
+		else
+			to_chat(user, span_warning("[P] needs a GRIDLINK chip installed first."))
+		return
+	return ..()
 
 
 /obj/machinery/f13/wasteland_grid_console/proc/_fault_report()
@@ -5214,13 +6040,14 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/wasteland_grid_advisor_console
 	name = "reactor advisor console"
 	desc = "Decision-support terminal for reactor operations and safe setpoint guidance."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE
 	idle_power_usage = 0
 	active_power_usage = 0
 	interaction_flags_machine = INTERACT_MACHINE_OFFLINE | INTERACT_MACHINE_WIRES_IF_OPEN | INTERACT_MACHINE_ALLOW_SILICON | INTERACT_MACHINE_OPEN_SILICON | INTERACT_MACHINE_SET_MACHINE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	var/advisor_name = "AZ-5 Decision Support Unit"
 
 /obj/machinery/f13/wasteland_grid_advisor_console/Initialize()
@@ -5230,7 +6057,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/wasteland_grid_advisor_console/power_change()
 	. = ..()
 	stat &= ~NOPOWER
-	icon_state = "control_on"
+	icon_state = "terminal_vault"
 
 /obj/machinery/f13/wasteland_grid_advisor_console/attack_hand(mob/user)
 	. = ..()
@@ -5587,9 +6414,10 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/structure/f13/work_order_board
 	name = "work order board"
 	desc = "Reactor contracts console. Feed the plant, get paid."
-	icon = 'icons/obj/machines/antimatter.dmi'
-	icon_state = "control_on"
+	icon = GRID_FACTION_ASSET_DMI
+	icon_state = "terminal_vault"
 	density = TRUE
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 
 	var/list/orders = list()
 	var/next_refresh = 0

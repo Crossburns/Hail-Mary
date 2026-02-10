@@ -69,6 +69,14 @@ GLOBAL_PROTECT(admin_verbs_admin)
 	/client/proc/cmd_admin_check_player_exp, /* shows players by playtime */
 	/client/proc/toggle_combo_hud, // toggle display of the combination pizza antag and taco sci/med/eng hud
 	/client/proc/toggle_AI_interact, /*toggle admin ability to interact with machines as an AI*/
+	/client/proc/cmd_fauna_debug_toggle,
+	/client/proc/cmd_fauna_snapshot,
+	/client/proc/cmd_fauna_set_tuning,
+	/client/proc/cmd_fauna_adjust_zone_state,
+	/client/proc/cmd_grid_snapshot,
+	/client/proc/cmd_grid_set_online,
+	/client/proc/cmd_grid_adjust_resources,
+	/client/proc/cmd_grid_set_district_power,
 	/datum/admins/proc/open_shuttlepanel, /* Opens shuttle manipulator UI */
 	/client/proc/respawn_character,
 	/client/proc/secrets,
@@ -188,6 +196,10 @@ GLOBAL_LIST_INIT(admin_verbs_debug, world.AVerbsDebug())
 	/client/proc/cmd_display_init_log,
 	/client/proc/cmd_display_overlay_log,
 	/client/proc/reload_configuration,
+	/client/proc/cmd_fauna_debug_toggle,
+	/client/proc/cmd_fauna_snapshot,
+	/client/proc/cmd_fauna_set_tuning,
+	/client/proc/cmd_fauna_adjust_zone_state,
 	/datum/admins/proc/create_or_modify_area,
 	/datum/admins/proc/fixcorruption,
 #ifdef REFERENCE_TRACKING

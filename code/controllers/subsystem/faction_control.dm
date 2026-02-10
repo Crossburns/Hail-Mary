@@ -56,6 +56,7 @@
 #define FACTION_CTRL_GRID_BG_RADS_PRESSURE_THRESHOLD 10
 #define FACTION_CTRL_HAZARD_CONTRACT_CAPS_BONUS 20
 #define FACTION_CTRL_HAZARD_CONTRACT_RESEARCH_BONUS 2
+#define FACTION_CTRL_NODE_RECONCILE_EVERY 20 SECONDS
 
 SUBSYSTEM_DEF(faction_control)
 	name = "Faction Control"
@@ -170,6 +171,12 @@ SUBSYSTEM_DEF(faction_control)
 	)
 	/// world.time
 	var/next_payout = 0
+	/// faction => list("target_faction" = world.time expiry)  - tracks active raid permissions
+	var/list/faction_raid_permissions = list()
+	/// faction => world.time cooldown for failed raids
+	var/list/faction_raid_cooldown = list()
+	/// world.time scheduler for district node/grid desync reconciliation
+	var/next_node_reconcile = 0
 
 /datum/controller/subsystem/faction_control/Initialize(timeofday)
 	. = ..()
@@ -181,6 +188,7 @@ SUBSYSTEM_DEF(faction_control)
 	next_utility_eval = world.time + FACTION_CTRL_UTILITY_EVAL_EVERY
 	next_hazard_roll = world.time + FACTION_CTRL_HAZARD_INTERVAL
 	next_grid_pressure_check = world.time + FACTION_CTRL_GRID_PRESSURE_CHECK
+	next_node_reconcile = world.time + FACTION_CTRL_NODE_RECONCILE_EVERY
 
 /datum/controller/subsystem/faction_control/fire(resumed = FALSE)
 	if(world.time >= next_payout)
@@ -206,6 +214,10 @@ SUBSYSTEM_DEF(faction_control)
 	if(world.time >= next_grid_pressure_check)
 		process_grid_pressure_events()
 		next_grid_pressure_check = world.time + FACTION_CTRL_GRID_PRESSURE_CHECK
+
+	if(world.time >= next_node_reconcile)
+		reconcile_player_faction_node_links()
+		next_node_reconcile = world.time + FACTION_CTRL_NODE_RECONCILE_EVERY
 
 	process_world_events()
 	process_hazard_zones()
@@ -248,6 +260,8 @@ SUBSYSTEM_DEF(faction_control)
 	if(!islist(active_hazard_zones)) active_hazard_zones = list()
 	if(!islist(hazard_extract_cd)) hazard_extract_cd = list()
 	if(!islist(district_buildables)) district_buildables = list()
+	if(!islist(faction_raid_permissions)) faction_raid_permissions = list()
+	if(!islist(faction_raid_cooldown)) faction_raid_cooldown = list()
 	if(!islist(controllable_factions) || !length(controllable_factions))
 		controllable_factions = list(FACTION_BROTHERHOOD, FACTION_NCR, FACTION_LEGION, FACTION_EASTWOOD, FACTION_MASS_FUSION, FACTION_TRIBE)
 	if(!islist(faction_aliases) || !length(faction_aliases))
@@ -1895,8 +1909,12 @@ SUBSYSTEM_DEF(faction_control)
 
 /datum/controller/subsystem/faction_control/proc/get_district_for_atom(atom/A)
 	if(!A) return null
-	if(istext(A:district_id) && length(A:district_id))
-		return A:district_id
+	// Some mapped objects expose district_id directly. Check key existence first,
+	// because indexing a missing key can runtime on some atom types.
+	if(islist(A.vars) && ("district_id" in A.vars))
+		var/explicit_district = A.vars["district_id"]
+		if(istext(explicit_district) && length(explicit_district))
+			return explicit_district
 	var/area/Ar = get_area(A)
 	if(!Ar) return null
 	return get_district_for_area(Ar)
@@ -1904,6 +1922,41 @@ SUBSYSTEM_DEF(faction_control)
 /datum/controller/subsystem/faction_control/proc/get_owner(district)
 	if(!district) return null
 	return district_owner[district]
+
+/datum/controller/subsystem/faction_control/proc/sync_district_to_grid(district, owner_override = null, atom/source = null)
+	var/datum/grid_faction_bridge/bridge = get_grid_faction_bridge()
+	if(!bridge)
+		return list(
+			"ok" = FALSE,
+			"district" = district,
+			"owner" = null,
+			"reason" = "missing_bridge"
+		)
+	return bridge.sync_district_to_grid(src, district, owner_override, source)
+
+/datum/controller/subsystem/faction_control/proc/_log_district_grid_sync(list/result, atom/source = null)
+	var/datum/grid_faction_bridge/bridge = get_grid_faction_bridge()
+	if(!bridge)
+		return
+	bridge.log_sync(result, source)
+
+/datum/controller/subsystem/faction_control/proc/rebuild_district_to_grid_bindings()
+	var/datum/grid_faction_bridge/bridge = get_grid_faction_bridge()
+	if(!bridge)
+		return list("grid-faction bridge unavailable")
+	return bridge.rebuild_district_to_grid_bindings(src)
+
+/datum/controller/subsystem/faction_control/proc/audit_district_node_state()
+	var/datum/grid_faction_bridge/bridge = get_grid_faction_bridge()
+	if(!bridge)
+		return list("grid-faction bridge unavailable")
+	return bridge.audit_district_node_state(src)
+
+/datum/controller/subsystem/faction_control/proc/reconcile_player_faction_node_links()
+	var/datum/grid_faction_bridge/bridge = get_grid_faction_bridge()
+	if(!bridge)
+		return
+	bridge.reconcile_player_faction_node_links(src)
 
 /datum/controller/subsystem/faction_control/proc/ensure_district(district)
 	if(!district) return null
@@ -1942,6 +1995,9 @@ SUBSYSTEM_DEF(faction_control)
 	ensure_district(district)
 	var/old = district_owner[district]
 	district_owner[district] = faction
+	var/list/sync_result = sync_district_to_grid(district, faction, null)
+	if(!sync_result["ok"])
+		log_game("Faction/Grid owner update sync failed for [district]: [sync_result["reason"]]")
 	if(old != faction)
 		world << span_warning("Faction Control: [district] is now controlled by [faction].")
 		if(is_controllable_faction(faction))
@@ -1954,6 +2010,14 @@ SUBSYSTEM_DEF(faction_control)
 				to_chat(user, span_notice("District utility check: [district] power route is ONLINE."))
 			else
 				to_chat(user, span_warning("District utility check: [district] power route is OFFLINE. Route district power from the grid controllers."))
+		if(islist(GLOB.player_faction_district_nodes))
+			for(var/obj/structure/player_faction_district_node/N in GLOB.player_faction_district_nodes)
+				if(!N || QDELETED(N))
+					continue
+				if(N:district_id != district)
+					continue
+				if(hascall(N, "on_owner_changed"))
+					call(N, "on_owner_changed")()
 	return TRUE
 
 /datum/controller/subsystem/faction_control/proc/can_faction_capture(district, faction)
@@ -2238,6 +2302,24 @@ SUBSYSTEM_DEF(faction_control)
 				template_need = "[RP["name"]]"
 	data["buildable_template_name"] = template_name
 	data["buildable_template_requires"] = template_need
+
+	// Raid permission data
+	data["territory_percentage"] = get_faction_territory_percentage(f)
+	data["has_total_dominance"] = check_total_dominance(f)
+	data["raidable_targets"] = get_raidable_factions(f)
+	var/list/active_raids = list()
+	if(islist(faction_raid_permissions[f]))
+		for(var/target in faction_raid_permissions[f])
+			var/expiry = faction_raid_permissions[f][target]
+			if(expiry && world.time < expiry)
+				var/target_name = target == FACTION_NCR ? "the Bear (NCR)" : (target == FACTION_LEGION ? "the Bull (Legion)" : target)
+				var/time_left = round((expiry - world.time) / 600)
+				active_raids += list(list("target" = target, "name" = target_name, "minutes_left" = time_left))
+	data["active_raids"] = active_raids
+
+	// Player faction data for UI display
+	data["player_factions"] = get_all_player_factions_ui_data()
+
 	return data
 
 /datum/controller/subsystem/faction_control/proc/get_drop_turf_near(atom/center)
@@ -3271,6 +3353,155 @@ SUBSYSTEM_DEF(faction_control)
 
 /datum/faction_hazard_zone/proc/expired(now_time)
 	return now_time >= ends_at
+
+// ==================== RAID PERMISSION SYSTEM ====================
+
+/// Calculate what percentage of active districts a faction controls
+/datum/controller/subsystem/faction_control/proc/get_faction_territory_percentage(faction)
+	if(!faction) return 0
+	var/total_districts = 0
+	var/controlled_districts = 0
+
+	for(var/district in district_owner)
+		total_districts++
+		if(district_owner[district] == faction)
+			controlled_districts++
+
+	if(total_districts == 0) return 0
+	return round((controlled_districts / total_districts) * 100)
+
+/// Check if a faction has achieved total dominance (5+ districts controlled)
+/datum/controller/subsystem/faction_control/proc/check_total_dominance(faction)
+	if(!faction) return FALSE
+	var/controlled_districts = 0
+	for(var/district in district_owner)
+		if(district_owner[district] == faction)
+			controlled_districts++
+	return controlled_districts >= 5
+
+/// Grant raid permission to a faction against a target faction
+/datum/controller/subsystem/faction_control/proc/grant_raid_permission(faction, target_faction, duration = 2 HOURS, cost = 100000)
+	if(!faction || !target_faction) return FALSE
+	if(!islist(faction_raid_permissions[faction]))
+		faction_raid_permissions[faction] = list()
+
+	// Check if on cooldown from failed raid
+	var/cd_key = "[faction]_vs_[target_faction]"
+	if(faction_raid_cooldown[cd_key] && world.time < faction_raid_cooldown[cd_key])
+		return FALSE
+
+	// Deduct cost from faction funds
+	if(cost > 0)
+		var/current_funds = faction_funds[faction]
+		if(isnull(current_funds)) current_funds = 0
+		if(current_funds < cost)
+			return FALSE
+		faction_funds[faction] = current_funds - cost
+
+	// Grant permission
+	faction_raid_permissions[faction][target_faction] = world.time + duration
+
+	// Grant raid traits to all faction members
+	grant_faction_raid_traits(faction, target_faction)
+
+	// Broadcast announcement
+	var/target_name = target_faction == FACTION_NCR ? "the Bear" : (target_faction == FACTION_LEGION ? "the Bull" : target_faction)
+	priority_announce("[faction] has seized control of the wasteland and declared war on [target_name]! Raid permissions GRANTED for [duration / 600] minutes!", "FACTION WARFARE", 'sound/misc/notice2.ogg')
+
+	log_game("[faction] activated raid permission against [target_faction] for [duration/600] minutes. Cost: [cost] caps.")
+
+	return TRUE
+
+/// Check if a faction has active raid permission against a target
+/datum/controller/subsystem/faction_control/proc/has_raid_permission(faction, target_faction)
+	if(!faction || !target_faction) return FALSE
+	if(!islist(faction_raid_permissions[faction])) return FALSE
+
+	var/expiry = faction_raid_permissions[faction][target_faction]
+	if(isnull(expiry)) return FALSE
+
+	if(world.time >= expiry)
+		// Permission expired
+		faction_raid_permissions[faction] -= target_faction
+		return FALSE
+
+	return TRUE
+
+/// Revoke raid permission (called when raid fails)
+/datum/controller/subsystem/faction_control/proc/revoke_raid_permission(faction, target_faction, cooldown_duration = 24 HOURS)
+	if(!faction || !target_faction) return
+
+	if(islist(faction_raid_permissions[faction]))
+		faction_raid_permissions[faction] -= target_faction
+
+	// Revoke raid traits from all faction members
+	revoke_faction_raid_traits(faction, target_faction)
+
+	// Apply cooldown
+	var/cd_key = "[faction]_vs_[target_faction]"
+	faction_raid_cooldown[cd_key] = world.time + cooldown_duration
+
+	var/target_name = target_faction == FACTION_NCR ? "the Bear" : (target_faction == FACTION_LEGION ? "the Bull" : target_faction)
+	priority_announce("[faction]'s assault on [target_name] has been repelled! Raid permissions revoked for [cooldown_duration / 36000] hours.", "FACTION WARFARE", 'sound/misc/notice1.ogg')
+
+	log_game("[faction] lost raid permission against [target_faction]. Cooldown: [cooldown_duration/36000] hours.")
+
+/// Get list of factions this faction can raid
+/datum/controller/subsystem/faction_control/proc/get_raidable_factions(faction)
+	var/list/targets = list()
+	if(!faction) return targets
+
+	// NCR and Legion can raid each other
+	if(faction == FACTION_NCR)
+		if(check_total_dominance(faction))
+			targets += list("target" = FACTION_LEGION, "name" = "the Bull (Legion)", "cost" = 100000)
+	else if(faction == FACTION_LEGION)
+		if(check_total_dominance(faction))
+			targets += list("target" = FACTION_NCR, "name" = "the Bear (NCR)", "cost" = 100000)
+
+	return targets
+
+/// Grant raid permission trait to all online members of a faction
+/datum/controller/subsystem/faction_control/proc/grant_faction_raid_traits(faction, target_faction)
+	if(!faction || !target_faction) return
+
+	// Determine which trait to grant based on target
+	var/trait_to_grant = null
+	if(target_faction == FACTION_NCR)
+		trait_to_grant = TRAIT_RAID_PERMISSION_NCR
+	else if(target_faction == FACTION_LEGION)
+		trait_to_grant = TRAIT_RAID_PERMISSION_LEGION
+
+	if(!trait_to_grant) return
+
+	// Grant trait to all online faction members
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
+		if(!H.client) continue
+		var/mob_faction = get_mob_faction(H)
+		if(mob_faction == faction)
+			ADD_TRAIT(H, trait_to_grant, "faction_raid_permission")
+			to_chat(H, span_boldannounce("RAID AUTHORIZATION GRANTED! You may now attack [target_faction] forces in their base!"))
+
+/// Revoke raid permission trait from all members of a faction
+/datum/controller/subsystem/faction_control/proc/revoke_faction_raid_traits(faction, target_faction)
+	if(!faction || !target_faction) return
+
+	// Determine which trait to revoke based on target
+	var/trait_to_revoke = null
+	if(target_faction == FACTION_NCR)
+		trait_to_revoke = TRAIT_RAID_PERMISSION_NCR
+	else if(target_faction == FACTION_LEGION)
+		trait_to_revoke = TRAIT_RAID_PERMISSION_LEGION
+
+	if(!trait_to_revoke) return
+
+	// Revoke trait from all faction members (both online and offline handled by trait system)
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
+		if(!H.client) continue
+		var/mob_faction = get_mob_faction(H)
+		if(mob_faction == faction)
+			REMOVE_TRAIT(H, trait_to_revoke, "faction_raid_permission")
+			to_chat(H, span_warning("RAID AUTHORIZATION REVOKED! You may no longer attack [target_faction] forces in their base!"))
 
 /obj/machinery/f13/faction_locked
 	name = "faction-locked device"

@@ -6,20 +6,22 @@
 -Assaultrons
 */
 
+#define MS13_ROBOTS_DMI 'code/modules/f13/ms13robots.dmi'
+
 /mob/living/simple_animal/hostile/handy
 	name = "mr. handy"
 	desc = "A crazed pre-war household assistant robot, armed with a cutting saw."
-	icon = 'icons/fallout/mobs/robots/wasterobots.dmi'
-	icon_state = "handy"
-	icon_living = "handy"
-	icon_dead = "robot_dead"
+	icon = MS13_ROBOTS_DMI
+	icon_state = "mrhandy_saw"
+	icon_living = "mrhandy_saw"
+	icon_dead = "mrhandy_saw"
 	speed = 2
 	can_ghost_into = TRUE
 	gender = NEUTER
 	mob_biotypes = MOB_ROBOTIC|MOB_INORGANIC
 	move_resist = MOVE_FORCE_OVERPOWERING // Can't be pulled
 	mob_armor = ARMOR_VALUE_ROBOT_CIVILIAN
-	maxHealth = 100 
+	maxHealth = 100
 	health = 100
 	stamcrit_threshold = SIMPLEMOB_NO_STAMCRIT
 	emp_flags = list(
@@ -79,7 +81,7 @@
 
 /mob/living/simple_animal/hostile/handy/playable
 	mob_armor = ARMOR_VALUE_ROBOT_CIVILIAN
-	maxHealth = 300 
+	maxHealth = 300
 	health = 300
 	attack_verb_simple = "shoots a burst of flame at"
 	emote_taunt_sound = null
@@ -108,12 +110,13 @@
 /mob/living/simple_animal/hostile/handy/gutsy
 	name = "mr. gutsy"
 	desc = "A pre-war combat robot based off the Mr. Handy design, armed with plasma weaponry and a deadly close-range flamer."
-	icon_state = "gutsy"
-	icon_living = "gutsy"
-	icon_dead = "robot_dead"
+	icon = MS13_ROBOTS_DMI
+	icon_state = "mrhandy_gutsy"
+	icon_living = "mrhandy_gutsy"
+	icon_dead = "mrhandy_gutsy"
 	can_ghost_into = FALSE
 	mob_armor = ARMOR_VALUE_ROBOT_MILITARY
-	maxHealth = 100 
+	maxHealth = 100
 	health = 100
 	stat_attack = UNCONSCIOUS
 	melee_damage_lower = 18
@@ -169,7 +172,7 @@
 
 /mob/living/simple_animal/hostile/handy/gutsy/playable
 	mob_armor = ARMOR_VALUE_ROBOT_MILITARY
-	maxHealth = 100 
+	maxHealth = 100
 	health = 100
 	speed = 1
 	attack_verb_simple = "shoots a burst of flame at"
@@ -202,7 +205,7 @@
 	icon_dead = "liberator_d"
 	icon_gib = "liberator_g"
 	mob_armor = ARMOR_VALUE_ROBOT_SECURITY
-	maxHealth = 50 
+	maxHealth = 50
 	health = 50
 	melee_damage_lower = 5
 	melee_damage_upper = 10
@@ -249,12 +252,12 @@
 /mob/living/simple_animal/hostile/handy/robobrain
 	name = "robobrain"
 	desc = "A next-gen cyborg developed by General Atomic International"
-	icon = 'icons/fallout/mobs/robots/wasterobots.dmi'
+	icon = MS13_ROBOTS_DMI
 	icon_state = "robobrain"
 	icon_living = "robobrain"
-	icon_dead = "robobrain_d"
+	icon_dead = "robobrain"
 	mob_armor = ARMOR_VALUE_ROBOT_SECURITY
-	maxHealth = 110 
+	maxHealth = 110
 	health = 110
 	stat_attack = UNCONSCIOUS
 	can_ghost_into = FALSE
@@ -306,12 +309,12 @@
 /mob/living/simple_animal/hostile/handy/protectron
 	name = "protectron"
 	desc = "A pre-war security robot armed with deadly lasers."
-	icon = 'icons/fallout/mobs/robots/protectrons.dmi'
-	icon_state = "protectron"
-	icon_living = "protectron"
-	icon_dead = "protectron_dead"
+	icon = MS13_ROBOTS_DMI
+	icon_state = "protectron_common"
+	icon_living = "protectron_common"
+	icon_dead = "protectron_common"
 	mob_armor = ARMOR_VALUE_ROBOT_CIVILIAN
-	maxHealth = 100 
+	maxHealth = 100
 	health = 100
 	stat_attack = UNCONSCIOUS
 	speed = 4
@@ -321,12 +324,12 @@
 	extra_projectiles = 0 //removed extra projectiles to make these easier to deal with on super lowpop
 	stat_attack = CONSCIOUS
 	ranged = TRUE
-	move_to_delay = 9 //WAY slower than average, 
+	move_to_delay = 9 //WAY slower than average,
 	// m2d 3 = standard, less is fast, more is slower.
 
 	retreat_distance = 0 // Mob doesn't retreat
 	//how far they pull back
-	
+
 	minimum_distance = 1
 	// how close you can get before they try to pull back
 
@@ -335,7 +338,7 @@
 
 	vision_range = 8
 	//tiles within they start making noise, does count the mobs tile
-	
+
 	attack_verb_simple = list(
 		"baps",
 		"bops",
@@ -356,7 +359,7 @@
 		/obj/item/stack/crafting/electronicparts/five
 		)
 	attack_phrase = list(
-		"Howdy pardner!", 
+		"Howdy pardner!",
 		"Shoot out at the O.K. Corral!",
 		"Go back to Oklahoma!",
 		"Please assume the position.",
@@ -433,10 +436,10 @@
 /mob/living/simple_animal/pet/dog/protectron //Not an actual dog
 	name = "Trading Protectron"
 	desc = "A standard RobCo RX2 V1.16.4 \"Trade-o-Vend\", loaded with Trade protocols.<br>Looks like it was kept operational for an indefinite period of time. Its body is covered in cracks and dents of various sizes.<br>As it has been repaired countless times, it's amazing the machine is still functioning at all."
-	icon = 'icons/fallout/mobs/robots/protectrons.dmi'
-	icon_state = "protectron_trade"
-	icon_living = "protectron_trade"
-	icon_dead = "protectron_trade_dead"
+	icon = MS13_ROBOTS_DMI
+	icon_state = "vendotron_yellow"
+	icon_living = "vendotron_yellow"
+	icon_dead = "vendotron_yellow"
 	maxHealth = 200
 	health = 200
 	can_ghost_into = FALSE
@@ -485,12 +488,13 @@
 /mob/living/simple_animal/hostile/handy/assaultron
 	name = "assaultron"
 	desc = "A deadly close combat robot developed by RobCo in a vaguely feminine, yet ominous chassis."
+	icon = MS13_ROBOTS_DMI
 	icon_state = "assaultron"
 	icon_living = "assaultron"
 	gender = FEMALE //Pffffffffffffffffffffff
-	icon_dead = "gib7"
+	icon_dead = "assaultron"
 	mob_armor = ARMOR_VALUE_ROBOT_MILITARY
-	maxHealth = 100 
+	maxHealth = 100
 	health = 100
 	stat_attack = UNCONSCIOUS
 	can_ghost_into = FALSE
@@ -547,6 +551,7 @@
 /mob/living/simple_animal/hostile/handy/assaultron/playable/medical
 	name = "SA-S-E"
 	desc = "An Assaultron modified for the Medical field, SA-S-E forgoes the weaponry and deadliness of her military countarparts to save lives. Painted white with blue highlights, and a blue cross on the front of her visor, this robot comes equipped with what looks like modified medical gear. Her head has no eye-laser, instead a gently pulsing blue eye that scans people the analyze their health, a defibrilator on her back, and articulated hands to be able to use the myriad medical tools strapped to parts of her body under protective cases all show this model is meant to save lives. She's stockier than other Assaultrons due to all the added gear, and her legs seem much thicker than normal due to reinforced servos and gears."
+	// no matching ms13robots.dmi state shown in your sheet for this one, so leaving as-is:
 	icon_state = "assaultron_sase"
 	icon_dead = "assaultron_sase_dead"
 
@@ -580,4 +585,3 @@
 		SP_DISTANT_RANGE(LASER_RANGE_DISTANT)
 	)
 	can_ghost_into = FALSE
-

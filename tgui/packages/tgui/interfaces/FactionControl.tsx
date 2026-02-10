@@ -122,6 +122,33 @@ type ResearchRow = {
   blocked_reason: string;
 };
 
+type RaidableTarget = {
+  target: string;
+  name: string;
+  cost: number;
+};
+
+type ActiveRaid = {
+  target: string;
+  name: string;
+  minutes_left: number;
+};
+
+type PlayerFactionRow = {
+  id: string;
+  name: string;
+  tag: string;
+  desc: string;
+  founder_name: string;
+  member_count: number;
+  online_count: number;
+  territory_count: number;
+  has_district_node: boolean;
+  has_control_console: boolean;
+  color: string;
+  treasury: number;
+};
+
 type Data = {
   faction: string;
   can_control: boolean;
@@ -153,6 +180,11 @@ type Data = {
   intel_reveal_s: number;
   buildable_template_name: string;
   buildable_template_requires: string;
+  territory_percentage: number;
+  has_total_dominance: boolean;
+  raidable_targets: RaidableTarget[];
+  active_raids: ActiveRaid[];
+  player_factions: PlayerFactionRow[];
 };
 
 export const FactionControl = (props, context) => {
@@ -235,6 +267,12 @@ export const FactionControl = (props, context) => {
           </Tabs.Tab>
           <Tabs.Tab selected={tab === 'Hazards'} onClick={() => setTab('Hazards')}>
             Hazards
+          </Tabs.Tab>
+          <Tabs.Tab selected={tab === 'Warfare'} onClick={() => setTab('Warfare')}>
+            Warfare
+          </Tabs.Tab>
+          <Tabs.Tab selected={tab === 'PlayerFactions'} onClick={() => setTab('PlayerFactions')}>
+            Player Factions
           </Tabs.Tab>
         </Tabs>
 
@@ -653,6 +691,159 @@ export const FactionControl = (props, context) => {
                     </Table.Row>
                   );
                 })}
+              </Table>
+            )}
+          </Section>
+        )}
+
+        {tab === 'Warfare' && (
+          <Section title="Faction Warfare">
+            <LabeledList>
+              <LabeledList.Item label="Territory Control">
+                {data.territory_percentage || 0}%
+              </LabeledList.Item>
+              <LabeledList.Item label="Raid Eligibility">
+                {data.has_total_dominance ? (
+                  <Box color="good">ELIGIBLE - 5+ districts controlled!</Box>
+                ) : (
+                  <Box color="average">Not eligible - need 5+ districts</Box>
+                )}
+              </LabeledList.Item>
+            </LabeledList>
+
+            {data.active_raids && data.active_raids.length > 0 && (
+              <Section title="Active Raid Permissions" mt={2}>
+                <Table>
+                  <Table.Row header>
+                    <Table.Cell>Target</Table.Cell>
+                    <Table.Cell>Time Remaining</Table.Cell>
+                  </Table.Row>
+                  {data.active_raids.map((raid) => (
+                    <Table.Row key={raid.target}>
+                      <Table.Cell>
+                        <Box color="bad" bold>
+                          {raid.name}
+                        </Box>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Box color="good">{raid.minutes_left} minutes</Box>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table>
+              </Section>
+            )}
+
+            {data.raidable_targets && data.raidable_targets.length > 0 && (
+              <Section title="Available Raid Operations" mt={2}>
+                <Box mb={1} color="bad" bold>
+                  WARNING: Activating a raid will cost significant resources and notify the entire server.
+                  You will have 2 hours to raid the enemy base. Failure results in a 24-hour cooldown.
+                </Box>
+                <Table>
+                  <Table.Row header>
+                    <Table.Cell>Target Faction</Table.Cell>
+                    <Table.Cell>Cost</Table.Cell>
+                    <Table.Cell>Action</Table.Cell>
+                  </Table.Row>
+                  {data.raidable_targets.map((target) => (
+                    <Table.Row key={target.target}>
+                      <Table.Cell>
+                        <Box color="bad" bold fontSize="16px">
+                          {target.name}
+                        </Box>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Box bold>{target.cost} caps</Box>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Button
+                          color="bad"
+                          disabled={!data.can_control}
+                          onClick={() =>
+                            act('activate_raid', {
+                              target: target.target,
+                              cost: target.cost,
+                            })
+                          }>
+                          FINISH THEM
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table>
+              </Section>
+            )}
+
+            {(!data.raidable_targets || data.raidable_targets.length === 0) &&
+              (!data.active_raids || data.active_raids.length === 0) && (
+                <Box color="average" mt={2}>
+                  No raid operations available. Control at least 5 districts to unlock raid permissions.
+                </Box>
+              )}
+          </Section>
+        )}
+
+        {tab === 'PlayerFactions' && (
+          <Section title="Player-Created Factions">
+            <Box mb={1} color="average">
+              Wastelanders and outlaws can create their own factions using a Faction Charter.
+              Player factions can claim 10x10 territories away from major faction bases.
+            </Box>
+            {!(data.player_factions && data.player_factions.length) ? (
+              <Box color="average">No player factions have been established yet.</Box>
+            ) : (
+              <Table>
+                <Table.Row header>
+                  <Table.Cell>Faction</Table.Cell>
+                  <Table.Cell>Tag</Table.Cell>
+                  <Table.Cell>Founder</Table.Cell>
+                  <Table.Cell>Members</Table.Cell>
+                  <Table.Cell>Online</Table.Cell>
+                  <Table.Cell>Territories</Table.Cell>
+                  <Table.Cell>Infrastructure</Table.Cell>
+                  <Table.Cell>Treasury</Table.Cell>
+                </Table.Row>
+                {(data.player_factions || []).map((pf) => (
+                  <Table.Row key={pf.id}>
+                    <Table.Cell>
+                      <Box bold color={pf.color || '#888888'}>
+                        {pf.name}
+                      </Box>
+                      <Box color="average" fontSize="11px">
+                        {pf.desc}
+                      </Box>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Box bold>{pf.tag}</Box>
+                    </Table.Cell>
+                    <Table.Cell>{pf.founder_name}</Table.Cell>
+                    <Table.Cell>{pf.member_count}</Table.Cell>
+                    <Table.Cell>
+                      <Box color={pf.online_count > 0 ? 'good' : 'average'}>
+                        {pf.online_count}
+                      </Box>
+                    </Table.Cell>
+                    <Table.Cell>{pf.territory_count}</Table.Cell>
+                    <Table.Cell>
+                      <Box>
+                        Node: {pf.has_district_node ? (
+                          <Box as="span" color="good">YES</Box>
+                        ) : (
+                          <Box as="span" color="average">NO</Box>
+                        )}
+                      </Box>
+                      <Box>
+                        Console: {pf.has_control_console ? (
+                          <Box as="span" color="good">YES</Box>
+                        ) : (
+                          <Box as="span" color="average">NO</Box>
+                        )}
+                      </Box>
+                    </Table.Cell>
+                    <Table.Cell>{pf.treasury} caps</Table.Cell>
+                  </Table.Row>
+                ))}
               </Table>
             )}
           </Section>

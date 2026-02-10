@@ -4,7 +4,7 @@
 /obj/machinery/f13/faction_capture_node
 	name = "district relay node"
 	desc = "Use this to claim a district for your faction and link a nearby resource pad."
-	icon = 'icons/obj/machines/antimatter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "control_on"
 	density = TRUE
 
@@ -224,7 +224,7 @@
 	parent_type = /obj/machinery/f13/faction_locked
 	name = "faction resource pad"
 	desc = "A district-owned pad that periodically manufactures field supplies."
-	icon = 'icons/obj/machines/teleporter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "tele-o"
 	require_district_owner = TRUE
 
@@ -343,7 +343,7 @@
 /obj/machinery/f13/faction_water_purifier
 	name = "water rights purifier node"
 	desc = "A capturable purifier node that feeds district water utilities."
-	icon = 'icons/obj/machines/antimatter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "control_on"
 	density = TRUE
 
@@ -411,7 +411,7 @@
 /obj/machinery/f13/faction_intel_tower
 	name = "intel relay tower"
 	desc = "Capturable signal node for reconnaissance and counter-intel actions."
-	icon = 'icons/obj/machines/antimatter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "control_off"
 	density = TRUE
 
@@ -530,7 +530,7 @@
 /obj/structure/f13/faction_district_buildable_marker
 	name = "district doctrine structure"
 	desc = "A faction doctrine deployment that modifies district operations."
-	icon = 'icons/obj/machines/antimatter.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "control_on"
 	density = TRUE
 	anchored = TRUE
@@ -554,7 +554,7 @@
 /obj/structure/f13/faction_caravan_marker
 	name = "faction supply convoy"
 	desc = "A moving convoy carrying district cargo."
-	icon = 'icons/obj/storage.dmi'
+	icon = GRID_FACTION_ASSET_DMI
 	icon_state = "crate"
 	density = TRUE
 	anchored = FALSE
@@ -799,6 +799,27 @@
 					T3 = get_turf(src)
 			if(T3 && istext(d8) && length(d8))
 				SSfaction_control.deploy_doctrine_buildable(user, d8, T3)
+			return TRUE
+		if("activate_raid")
+			var/target_faction = params["target"]
+			if(istext(target_faction) && length(target_faction))
+				var/f = SSfaction_control.get_mob_faction(user)
+				if(!f)
+					to_chat(user, span_warning("You are not part of a faction."))
+					return TRUE
+				if(!SSfaction_control.check_total_dominance(f))
+					to_chat(user, span_warning("Your faction must control at least 5 districts to activate raid permissions."))
+					return TRUE
+				var/cost = params["cost"]
+				if(isnull(cost)) cost = 100000
+				cost = round(cost)
+				var/target_name = target_faction == FACTION_NCR ? "the Bear (NCR)" : (target_faction == FACTION_LEGION ? "the Bull (Legion)" : target_faction)
+				if(alert(user, "Activate raid permission against [target_name]?\n\nCost: [cost] caps\nDuration: 2 hours\n\nThis will grant ALL faction members permission to raid the enemy base.", "FINISH THEM", "YES, FINISH THEM", "Cancel") != "YES, FINISH THEM")
+					return TRUE
+				if(SSfaction_control.grant_raid_permission(f, target_faction, 2 HOURS, cost))
+					to_chat(user, span_boldannounce("RAID PERMISSION ACTIVATED! All [f] members may now raid [target_name]!"))
+				else
+					to_chat(user, span_warning("Failed to activate raid permission. Check faction funds and cooldown status."))
 			return TRUE
 
 	return FALSE
