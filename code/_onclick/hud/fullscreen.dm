@@ -178,3 +178,69 @@
 	plane = LIGHTING_PLANE
 	blend_mode = BLEND_ADD
 	show_when_dead = TRUE
+
+/obj/screen/fullscreen/cinematic_transition
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "flash"
+	alpha = 0
+
+/obj/screen/fullscreen/cinematic_exposure
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "flash"
+	alpha = 0
+	blend_mode = BLEND_ADD
+
+/obj/screen/fullscreen/cinematic_mood
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "flash"
+	alpha = 0
+	blend_mode = BLEND_MULTIPLY
+
+/obj/screen/fullscreen/cinematic_rads
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "noise"
+	alpha = 0
+	color = "#9AE58E"
+
+/obj/screen/fullscreen/cinematic_heat_haze
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "flash"
+	alpha = 0
+	blend_mode = BLEND_OVERLAY
+	color = "#FFC782"
+
+/obj/screen/fullscreen/cinematic_emergency
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "flash"
+	alpha = 0
+	color = "#E24A3B"
+
+/obj/screen/fullscreen/lighting_grain
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "noise"
+	alpha = 0
+	blend_mode = BLEND_OVERLAY
+	show_when_dead = TRUE
+
+/obj/screen/fullscreen/cinematic_dust
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "noise"
+	alpha = 0
+	color = "#D9B983"
+	blend_mode = BLEND_OVERLAY
+
+/obj/screen/fullscreen/cinematic_lens_glow
+	icon = 'icons/mob/screen_gen.dmi'
+	screen_loc = "WEST,SOUTH to EAST,NORTH"
+	icon_state = "flash"
+	alpha = 0
+	color = "#A6D8FF"
+	blend_mode = BLEND_ADD

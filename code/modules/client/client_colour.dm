@@ -17,11 +17,13 @@
 	//eg: "Bloody screen" > "goggles colour" as the former is much more important
 
 /mob/var/current_area_client_colour = null
+/area/var/client_colour_grade = null
 /mob/living/var/current_daylight_client_colour = null
 /mob/living/var/current_weather_client_colour = null
 /mob/living/var/current_material_client_colour = null
 /mob/living/var/next_cinematic_visual_update = 0
 /mob/living/var/cinematic_postfx_cleared = FALSE
+/mob/living/var/radiation_sickness = 0
 
 
 /*

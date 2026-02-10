@@ -22,6 +22,17 @@
 
 	var/employer_icon = "employer_00.png"
 
+	// Optional chain/bonus metadata used by expanded courier quest definitions.
+	var/bonus_need_message = null
+	var/bonus_end_message = null
+	var/list/bonus_items = null
+	var/bonus_reward = 0
+	var/chain_name = null
+	var/stage_index = 1
+	var/stage_total = 1
+	var/next_stage_type = null
+	var/courier_rep_reward = 0
+
 /datum/bounty_quest/proc/ItsATarget(var/target)
 	for(var/target_type in target_items)
 		if(istype(target, target_type))

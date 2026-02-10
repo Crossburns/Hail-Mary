@@ -16,6 +16,7 @@
 #define FACTION_SMUTANT "Super Mutants"
 #define FACTION_ATLANTIC "Atlantic Cross"
 #define FACTION_LOCUST "Locust Point town"
+#define FACTION_MASS_FUSION "Mass Fusion"
 
 #define ENGSEC			(1<<0)
 
@@ -233,6 +234,15 @@
 #define F13BALTIMOREBARKEEP		(1<<11)
 #define F13BALTIMOREPILOT		(1<<12)
 #define F13BALTIMORERADIOHOST	(1<<13)
+
+#define DEP_MASS_FUSION (1<<16)
+
+#define F13MASSFUSIONSUPERVISOR (1<<0)
+#define F13MASSFUSIONSCAVENGER (1<<1)
+#define F13MASSFUSIONREACTOROP (1<<2)
+#define F13MASSFUSIONGRIDTECH (1<<3)
+#define F13MASSFUSIONRELAYENG (1<<4)
+#define F13MASSFUSIONHAZREC (1<<5)
 
 #define DEP_HOLIDAY (1<<6)
 

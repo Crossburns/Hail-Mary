@@ -8,6 +8,18 @@
 	..()
 	icon_state = "marka[rand(1,8)]"
 
+/obj/item/contraband_tag
+	name = "contraband tag"
+	desc = "A stamped contraband receipt used for courier bonus verification."
+	icon = 'icons/obj/quest_items.dmi'
+	icon_state = "marka2"
+
+/obj/item/courier_receipt
+	name = "courier receipt"
+	desc = "A signed delivery receipt."
+	icon = 'icons/obj/quest_items.dmi'
+	icon_state = "marka3"
+
 /obj/item/parcel
 	name = "parcel"
 	desc = "The package clearly contains something valuable, and maybe not so much."
@@ -22,6 +34,16 @@
 
 	var/screwup_chance = 60
 	var/prepared = FALSE
+	var/delivered = FALSE
+	var/courier_mode = TRUE
+	var/origin_faction = null
+	var/destination_faction = null
+	var/turf/origin_turf = null
+	var/min_delivery_distance = 15
+	var/issued_time = 0
+	var/min_delivery_time_ds = 0
+	var/mob/prepared_by = null
+	var/courier_id = ""
 
 	var/list/success_list = list(
 	/obj/item/crafting/duct_tape,
@@ -129,6 +151,9 @@
 /obj/item/parcel/New()
 	..()
 	icon_state = pick("bigbox", "longbox", "smallbox")
+	origin_turf = get_turf(src)
+	issued_time = world.time
+	courier_id = "[world.time]-[rand(1000,9999)]"
 
 	for(var/mob/living/player in shuffle(GLOB.player_list))
 		if(player.stat != DEAD && !isanimal(player) && ishuman(player) && player.mind)
@@ -156,6 +181,7 @@
 				desc = "A package clearly containing something valuable is intended for [recipient.name]."
 				qdel(I)
 				prepared = TRUE
+				prepared_by = user
 				screwup_chance = rand(50,70)
 	else
 		if(istype(I, /obj/item/kitchen/knife) | istype(I, /obj/item/melee/onehanded/machete) | istype(I, /obj/item/melee/onehanded/knife/switchblade))
@@ -180,3 +206,15 @@
 						booty = new booty(loc)
 						to_chat(user, "<span class='notice'>You found [booty] inside of parcel.</span>")
 						qdel(src)
+
+/obj/item/parcel/proc/get_player_reward(atom/source = null)
+	return 250
+
+/obj/item/parcel/proc/get_faction_reward(atom/source = null)
+	return 100
+
+/obj/item/parcel/proc/get_research_reward(atom/source = null)
+	return 10
+
+/obj/item/parcel/proc/get_rep_reward(atom/source = null)
+	return 1
