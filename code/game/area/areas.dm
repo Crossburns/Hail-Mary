@@ -144,6 +144,22 @@ GLOBAL_LIST_INIT(area_weather_list, list(WEATHER_ALL))
 	///How much radiation to give to every player in this area, per tick
 	var/rads_per_second
 
+	// Fauna ecosystem mapper tags (optional). These are read by SSfauna_ecosystem.
+	/// Preferred ecology habitat bucket: "wasteland", "cave", "building", "other"
+	var/fauna_habitat
+	/// Prevent ecology materialization in this area if TRUE
+	var/fauna_no_spawn = FALSE
+	/// Spawn/materialization multiplier for this area (0..4)
+	var/fauna_spawn_mult = 1
+	/// Adds positive forage quality when TRUE
+	var/fauna_forage_rich = FALSE
+	/// Numeric forage quality bonus (-10..12 practical range)
+	var/fauna_forage_bonus = 0
+	/// Marks area as water source for minor forage bump
+	var/water_source = FALSE
+	/// Migration pressure bias (-12..12): positive pushes migration, negative retains
+	var/fauna_migration_bias = 0
+
 /*Adding a wizard area teleport list because motherfucking lag -- Urist*/
 /*I am far too lazy to make it a proper list of areas so I'll just make it run the usual telepot routine at the start of the game*/
 GLOBAL_LIST_EMPTY(teleportlocs)

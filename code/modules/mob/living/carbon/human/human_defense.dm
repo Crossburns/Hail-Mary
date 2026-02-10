@@ -1,3 +1,44 @@
+/// Check if attacker has permission to attack target in their current area
+/mob/living/carbon/human/proc/check_raid_permission(mob/living/attacker, mob/living/carbon/human/target)
+	if(!attacker || !target) return TRUE
+	if(!ishuman(attacker)) return TRUE // Non-humans can attack anywhere
+	if(attacker == target) return TRUE // Can always attack yourself
+
+	// Check if target is in a faction base area
+	var/area/target_area = get_area(target)
+	if(!target_area) return TRUE
+
+	var/target_area_path = lowertext("[target_area.type]")
+	var/protected_faction = null
+
+	// Determine if this is a protected faction base
+	if(findtext(target_area_path, "/area/f13/ncr"))
+		protected_faction = "NCR"
+	else if(findtext(target_area_path, "/area/f13/legion"))
+		protected_faction = "Legion"
+
+	// If not in a faction base, allow attack
+	if(!protected_faction) return TRUE
+
+	// Get attacker's faction
+	if(!SSfaction_control) return TRUE
+	var/attacker_faction = SSfaction_control.get_mob_faction(attacker)
+	if(!attacker_faction) return TRUE
+
+	// Same faction can attack each other in their own base
+	var/target_faction = SSfaction_control.get_mob_faction(target)
+	if(attacker_faction == target_faction) return TRUE
+
+	// Check if attacker has raid permission trait
+	if(protected_faction == "NCR" && HAS_TRAIT(attacker, TRAIT_RAID_PERMISSION_NCR))
+		return TRUE
+	if(protected_faction == "Legion" && HAS_TRAIT(attacker, TRAIT_RAID_PERMISSION_LEGION))
+		return TRUE
+
+	// No permission - block attack
+	to_chat(attacker, span_warning("You cannot attack [target] in [protected_faction] territory without raid authorization!"))
+	return FALSE
+
 /mob/living/carbon/human/getarmor(def_zone, type)
 	var/armorval = 0
 	var/organnum = 0
@@ -53,6 +94,11 @@
 
 
 /mob/living/carbon/human/bullet_act(obj/item/projectile/P, def_zone)
+	// Check raid permission for projectiles
+	if(P.firer && ishuman(P.firer))
+		if(!check_raid_permission(P.firer, src))
+			return BULLET_ACT_BLOCK
+
 	if(dna && dna.species)
 		var/spec_return = dna.species.bullet_act(P, src)
 		if(spec_return)
@@ -88,6 +134,10 @@
 
 /mob/living/carbon/human/attacked_by(obj/item/I, mob/living/user, attackchain_flags = NONE, damage_multiplier = 1, damage_addition)
 	if(!I || !user)
+		return 0
+
+	// Check raid permission
+	if(ishuman(user) && !check_raid_permission(user, src))
 		return 0
 
 	var/obj/item/bodypart/affecting
@@ -126,6 +176,12 @@
 	. = ..()
 	if(.) //To allow surgery to return properly.
 		return
+
+	// Check raid permission for combat
+	if(ishuman(user) && act_intent == INTENT_HARM)
+		if(!check_raid_permission(user, src))
+			return
+
 	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
 		dna.species.spec_attack_hand(H, src, null, act_intent, unarmed_attack_flags)

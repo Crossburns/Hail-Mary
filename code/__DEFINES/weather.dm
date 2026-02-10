@@ -52,6 +52,7 @@
 #define WEATHER_ACID "acid_rain"
 #define WEATHER_SAND "sand_storm"
 #define WEATHER_RADS "RADSTORM"
+#define WEATHER_FEV "fev_storm"
 #define WEATHER_ALL_AREAS "all_of_em"
 
 /// All weather tags
@@ -61,7 +62,8 @@
 	WEATHER_RAIN,\
 	WEATHER_ACID,\
 	WEATHER_SAND,\
-	WEATHER_RADS
+	WEATHER_RADS,\
+	WEATHER_FEV
 
 /// All weather tags,
 #define WEATHER_ALL_MINUS_HEAT WEATHER_COLD,\

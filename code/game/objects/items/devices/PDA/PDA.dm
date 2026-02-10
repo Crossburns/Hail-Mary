@@ -9,6 +9,17 @@ GLOBAL_LIST_EMPTY(PDAs)
 #define PDA_SCANNER_HALOGEN		4
 #define PDA_SCANNER_GAS			5
 #define PDA_SPAM_DELAY		    2 MINUTES
+#define PIP_TRACKER_PING_COOLDOWN 20 SECONDS
+
+#define PIP_MOD_GRIDLINK		"gridlink"
+#define PIP_MOD_TRACKER			"tracker"
+#define PIP_MOD_BIOSCAN			"bioscan"
+#define PIP_MOD_RADIOPLUS		"radioplus"
+
+#define PIP_MODE_STATUS			60
+#define PIP_MODE_GRID			61
+#define PIP_MODE_TRACKER		62
+#define PIP_MODE_RADIO			63
 
 //pda icon overlays list defines
 #define PDA_OVERLAY_ALERT		1
@@ -104,6 +115,10 @@ GLOBAL_LIST_EMPTY(PDAs)
 	var/music_channel
 	var/TimerID
 	var/obj/item/record_disk/R
+	var/list/pipboy_mods = list()
+	var/wasteland_grid_linked = FALSE
+	var/wasteland_grid_link_name = null
+	var/last_tracker_ping = 0
 
 /obj/item/pda/suicide_act(mob/living/carbon/user)
 	var/deathMessage = msg_input(user)
@@ -388,6 +403,15 @@ GLOBAL_LIST_EMPTY(PDAs)
 						dat += "<li><a href='byond://?src=[REF(src)];choice=Drone Phone'>[PDAIMG(dronephone)]Drone Phone</a></li>"
 				dat += "<li><a href='byond://?src=[REF(src)];choice=3'>[PDAIMG(atmos)]Atmospheric Scan</a></li>"
 				dat += "<li><a href='byond://?src=[REF(src)];choice=Light'>[PDAIMG(flashlight)][fon ? "Disable" : "Enable"] Flashlight</a></li>"
+				if(has_mod(PIP_MOD_BIOSCAN))
+					dat += "<li><a href='byond://?src=[REF(src)];choice=PIP_STATUS'>[PDAIMG(medical)]Vitals & Status</a></li>"
+				dat += "<li><a href='byond://?src=[REF(src)];choice=PIP_MAP'>[PDAIMG(notes)]Open Local Map</a></li>"
+				if(has_mod(PIP_MOD_TRACKER))
+					dat += "<li><a href='byond://?src=[REF(src)];choice=PIP_TRACK'>[PDAIMG(scanner)]Tracker Suite</a></li>"
+				if(has_mod(PIP_MOD_GRIDLINK))
+					dat += "<li><a href='byond://?src=[REF(src)];choice=PIP_GRID'>[PDAIMG(power)]Grid Telemetry [wasteland_grid_linked ? "(Linked)" : "(Unlinked)"]</a></li>"
+				if(has_mod(PIP_MOD_RADIOPLUS))
+					dat += "<li><a href='byond://?src=[REF(src)];choice=PIP_RADIO'>[PDAIMG(signaler)]Personal Radio Deck</a></li>"
 				if (pai)
 					if(pai.loc != src)
 						pai = null
@@ -489,6 +513,69 @@ GLOBAL_LIST_EMPTY(PDAs)
 						dat += "<li><a href='?src=[REF(src)];rloadfreq=[saved_frequencies[freq]]'>[freq] ([format_frequency(saved_frequencies[freq])])</a>"
 						dat += " (<a href='?src=[REF(src)];rdelfreq=[saved_frequencies[freq]]'>Delete</a> | <a href='?src=[REF(src)];rrenfreq=[saved_frequencies[freq]]'>Rename</a>)</li>"
 					dat += "</ul>"
+			if(PIP_MODE_STATUS)
+				dat += "<h4>[PDAIMG(medical)] Vitals & Status</h4>"
+				dat += get_status_html(user)
+				dat += "<br><br>Install more chips to expand telemetry and tactical tools."
+			if(PIP_MODE_GRID)
+				dat += "<h4>[PDAIMG(power)] Wasteland Grid Telemetry</h4>"
+				if(!has_mod(PIP_MOD_GRIDLINK))
+					dat += "GRIDLINK module not installed."
+				else if(!wasteland_grid_linked)
+					dat += "No console paired. Use this Pip-Boy on a Mass Fusion grid console to pair."
+				else
+					dat += "Link: [wasteland_grid_link_name ? wasteland_grid_link_name : "Unknown console"]<br>"
+					dat += "Grid state: <b>[GLOB.wasteland_grid_state]</b><br>"
+					dat += "Online: [GLOB.wasteland_grid_online ? "YES" : "NO"]<br>"
+					dat += "Output: [round(GLOB.grid_output)]% ([round(_grid_get_export_mw_capacity())] MW / [round(_grid_get_export_mw_max())] MW)<br>"
+					dat += "Core heat: [round(GLOB.wasteland_grid_core_heat)]<br>"
+					dat += "Containment: [round(GLOB.wasteland_grid_containment)]<br>"
+					dat += "Integrity: [round(GLOB.wasteland_grid_integrity)]<br>"
+					dat += "Background rads: [round(GLOB.wasteland_grid_background_rads, 0.1)]<br>"
+					dat += "Faults: [length(GLOB.wasteland_grid_faults)]<br>"
+					dat += "<a href='byond://?src=[REF(src)];choice=PIP_UNLINK_GRID'>Forget Link</a>"
+			if(PIP_MODE_TRACKER)
+				dat += "<h4>[PDAIMG(scanner)] Tracker Suite</h4>"
+				if(!has_mod(PIP_MOD_TRACKER))
+					dat += "TRACKER module not installed."
+				else
+					var/ping_ready = world.time >= (last_tracker_ping + PIP_TRACKER_PING_COOLDOWN)
+					dat += "Deep ping: <a href='byond://?src=[REF(src)];choice=PIP_TRACK_PING'>[ping_ready ? "READY" : "Charging"]</a><br><br>"
+					dat += "<b>Visible Pip-Boys</b><br>"
+					var/list/track_lines = list()
+					for(var/obj/item/pda/P in sortNames(get_viewable_pdas()))
+						if(P == src || !P.owner)
+							continue
+						var/loc_text = "Signal only"
+						if(world.time < (last_tracker_ping + (4 SECONDS)))
+							var/turf/PT = get_turf(P)
+							if(PT)
+								var/area/PA = get_area(PT)
+								loc_text = "[PA ? PA.name : "Unknown"] ([PT.x],[PT.y],[PT.z])"
+						track_lines += " - [P.owner]: [loc_text]"
+					if(!length(track_lines))
+						dat += "None detected."
+					else
+						dat += jointext(track_lines, "<br>")
+			if(PIP_MODE_RADIO)
+				dat += "<h4>[PDAIMG(signaler)] Personal Radio Deck</h4>"
+				if(!has_mod(PIP_MOD_RADIOPLUS))
+					dat += "RADIOPLUS module not installed."
+				else
+					dat += "Music output: [allow_music ? "Allowed" : "Disabled"] "
+					dat += "(<a href='byond://?src=[REF(src)];allowmmusictoggle=1'>toggle</a>)<br>"
+					dat += "<a href='byond://?src=[REF(src)];choice=PIP_STOP_STATION'>Stop Playback</a><br><br>"
+					var/list/rows = list()
+					var/song_index = 0
+					for(var/datum/track/T in SSjukeboxes.songs)
+						song_index++
+						rows += "<a href='byond://?src=[REF(src)];choice=PIP_PLAY_STATION;songidx=[song_index]'>Play</a> [T.song_name]"
+						if(song_index >= 30)
+							break
+					if(!length(rows))
+						dat += "No tracks are currently available on this server."
+					else
+						dat += jointext(rows, "<br>")
 			if(9)
 				if(R)
 					stopMusic(user)
@@ -510,7 +597,15 @@ GLOBAL_LIST_EMPTY(PDAs)
 				mode = 0
 
 			else//Else it links to the cart menu proc. Although, it really uses menu hub 4--menu 4 doesn't really exist as it simply redirects to hub.
-				dat += cartridge.generate_menu()
+				var/obj/item/cartridge/current_cartridge = cartridge
+				if(current_cartridge && !QDELETED(current_cartridge) && hascall(current_cartridge, "generate_menu"))
+					var/generated_menu = call(current_cartridge, "generate_menu")()
+					if(istext(generated_menu) && length(generated_menu))
+						dat += generated_menu
+					else
+						dat += "<br><span class='warning'>Cartridge menu unavailable.</span>"
+				else
+					dat += "<br><span class='warning'>No cartridge inserted.</span>"
 
 	dat += "</body></html>"
 
@@ -527,6 +622,48 @@ GLOBAL_LIST_EMPTY(PDAs)
 
 /obj/item/pda/proc/Boop()
 	playsound(src, pick(pipsounds), 40, 1)
+
+/obj/item/pda/proc/has_mod(mod_id)
+	if(!mod_id)
+		return FALSE
+	return !!(pipboy_mods && (mod_id in pipboy_mods))
+
+/obj/item/pda/proc/install_mod_chip(mod_id, mob/living/user)
+	if(!mod_id)
+		return FALSE
+	if(!pipboy_mods)
+		pipboy_mods = list()
+	if(mod_id in pipboy_mods)
+		if(user)
+			to_chat(user, span_warning("[src] already has this module installed."))
+		return FALSE
+	pipboy_mods += mod_id
+	if(user)
+		to_chat(user, span_notice("You install a [uppertext(mod_id)] module in [src]."))
+	return TRUE
+
+/obj/item/pda/proc/link_wasteland_grid(obj/machinery/f13/wasteland_grid_console/C, mob/living/user)
+	if(!istype(C))
+		return FALSE
+	wasteland_grid_linked = TRUE
+	wasteland_grid_link_name = C.name
+	if(user)
+		to_chat(user, span_notice("[src] pairs with [C]. Grid telemetry link established."))
+	return TRUE
+
+/obj/item/pda/proc/get_status_html(mob/living/user)
+	if(!istype(user))
+		return "No biosignal detected."
+	var/list/lines = list()
+	lines += "<b>Condition</b>: [round(user.health)] / [round(user.maxHealth)]"
+	lines += "<b>Brute</b>: [round(user.getBruteLoss(), 0.1)]"
+	lines += "<b>Burn</b>: [round(user.getFireLoss(), 0.1)]"
+	lines += "<b>Toxin</b>: [round(user.getToxLoss(), 0.1)]"
+	lines += "<b>Oxygen</b>: [round(user.getOxyLoss(), 0.1)]"
+	lines += "<b>Radiation</b>: [round(user.radiation, 0.1)] rad"
+	if(ismob(user))
+		lines += "<b>Status</b>: [user.stat == DEAD ? "Deceased" : (user.stat ? "Unconscious" : "Nominal")]"
+	return jointext(lines, "<br>")
 
 /obj/item/pda/Topic(href, href_list)
 	..()
@@ -637,6 +774,57 @@ GLOBAL_LIST_EMPTY(PDAs)
 					mode = 0
 					if (!silent)
 						Boop()
+				if("PIP_STATUS")
+					mode = PIP_MODE_STATUS
+					if(!silent)
+						Boop()
+				if("PIP_GRID")
+					mode = PIP_MODE_GRID
+					if(!silent)
+						Boop()
+				if("PIP_TRACK")
+					mode = PIP_MODE_TRACKER
+					if(!silent)
+						Boop()
+				if("PIP_RADIO")
+					mode = PIP_MODE_RADIO
+					if(!silent)
+						Boop()
+				if("PIP_MAP")
+					if(U?.client)
+						U.client.show_station_minimap()
+					if(!silent)
+						Boop()
+				if("PIP_TRACK_PING")
+					if(has_mod(PIP_MOD_TRACKER))
+						if(world.time >= (last_tracker_ping + PIP_TRACKER_PING_COOLDOWN))
+							last_tracker_ping = world.time
+							to_chat(U, span_notice("[src] emits a focused tracking ping."))
+							if(!silent)
+								Boop()
+						else
+							to_chat(U, span_warning("Tracker ping is recharging."))
+				if("PIP_UNLINK_GRID")
+					wasteland_grid_linked = FALSE
+					wasteland_grid_link_name = null
+					to_chat(U, span_notice("[src] forgets paired grid console telemetry."))
+					if(!silent)
+						Boop()
+				if("PIP_STOP_STATION")
+					stopMusic(U)
+					radio_holder = null
+					if(!silent)
+						Boop()
+				if("PIP_PLAY_STATION")
+					if(has_mod(PIP_MOD_RADIOPLUS))
+						var/song_index = text2num(href_list["songidx"])
+						if(song_index > 0)
+							var/counter = 0
+							for(var/datum/track/T in SSjukeboxes.songs)
+								counter++
+								if(counter == song_index)
+									playmusic(T.song_path, T.song_name, 75)
+									break
 
 
 
@@ -1120,6 +1308,13 @@ GLOBAL_LIST_EMPTY(PDAs)
 
 // access to status display signals
 /obj/item/pda/attackby(obj/item/C, mob/user, params)
+	if(istype(C, /obj/item/pda_mod_chip))
+		var/obj/item/pda_mod_chip/chip = C
+		if(install_mod_chip(chip.mod_id, user))
+			qdel(chip)
+			playsound(src, 'sound/machines/terminal_processing.ogg', 20, 1)
+		return
+
 	if(istype(C, /obj/item/cartridge) && !cartridge)
 		if(!user.transferItemToLoc(C, src))
 			return
@@ -1405,6 +1600,39 @@ GLOBAL_LIST_EMPTY(PDAs)
 	playsound(user, 'sound/machines/button.ogg', 50, channel = music_channel)
 	playsound(user, null, channel = music_channel)
 
+/obj/item/pda_mod_chip
+	name = "Pip-Boy modification chip"
+	desc = "A compact expansion module for Pip-Boy firmware."
+	icon = 'icons/obj/pda.dmi'
+	icon_state = "cart"
+	item_state = "electronic"
+	w_class = WEIGHT_CLASS_TINY
+	var/mod_id = null
+
+/obj/item/pda_mod_chip/examine(mob/user)
+	. = ..()
+	. += span_notice("Install by using it on a Pip-Boy.")
+
+/obj/item/pda_mod_chip/gridlink
+	name = "Pip-Boy GRIDLINK chip"
+	desc = "Adds Mass Fusion grid telemetry and console pairing support."
+	mod_id = PIP_MOD_GRIDLINK
+
+/obj/item/pda_mod_chip/tracker
+	name = "Pip-Boy TRACKER chip"
+	desc = "Adds active transponder tracking and deep ping sweeps."
+	mod_id = PIP_MOD_TRACKER
+
+/obj/item/pda_mod_chip/bioscan
+	name = "Pip-Boy BIOSCAN chip"
+	desc = "Adds live personal vitals and radiation telemetry."
+	mod_id = PIP_MOD_BIOSCAN
+
+/obj/item/pda_mod_chip/radioplus
+	name = "Pip-Boy RADIOPLUS chip"
+	desc = "Adds personal radio deck playback controls."
+	mod_id = PIP_MOD_RADIOPLUS
+
 #undef PDA_SCANNER_NONE
 #undef PDA_SCANNER_MEDICAL
 #undef PDA_SCANNER_FORENSICS
@@ -1419,3 +1647,12 @@ GLOBAL_LIST_EMPTY(PDAs)
 #undef PDA_OVERLAY_ITEM
 #undef PDA_OVERLAY_LIGHT
 #undef PDA_OVERLAY_PAI
+#undef PIP_TRACKER_PING_COOLDOWN
+#undef PIP_MOD_GRIDLINK
+#undef PIP_MOD_TRACKER
+#undef PIP_MOD_BIOSCAN
+#undef PIP_MOD_RADIOPLUS
+#undef PIP_MODE_STATUS
+#undef PIP_MODE_GRID
+#undef PIP_MODE_TRACKER
+#undef PIP_MODE_RADIO
