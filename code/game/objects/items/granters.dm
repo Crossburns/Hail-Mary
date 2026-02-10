@@ -1116,6 +1116,15 @@
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, TRAIT_GENERIC)
 
+/obj/item/book/granter/trait/unethical_practitioner
+	name = "Forbidden Medical Codex"
+	desc = "A banned research manual detailing experimental combat augmentation procedures. The cover bears warning labels from multiple medical ethics boards."
+	oneuse = TRUE
+	granted_trait = TRAIT_UNETHICAL_PRACTITIONER
+	traitname = "unethical medical practices"
+	icon_state = "book1"
+	remarks = list("Ethics are a luxury in the wasteland...", "The subject's consent is... optional.", "Pain is just another form of data...", "These procedures push the boundaries of what's human...", "The Brotherhood would have you burned for reading this...", "War never changes, but bodies can...")
+
 
 /obj/item/book/granter/trait/selection
 	name = "Burned Book"

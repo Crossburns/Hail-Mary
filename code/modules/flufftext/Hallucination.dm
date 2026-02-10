@@ -663,8 +663,8 @@ GLOBAL_LIST_INIT(hallucination_list, list(
 		"Help!",\
 		"[pick_list_replacements(HAL_LINES_FILE, "threat")] in [pick_list_replacements(HAL_LINES_FILE, "location")][prob(50)?"!":"!!"]",\
 		"[pick("Where's [target.first_name()]?", "Set [target.first_name()] to arrest!")]",\
-		"[pick("C","Ai, c","Someone c","Rec")]all the shuttle!",\
-		"AI [pick("rogue", "is dead")]!!")
+		"[pick("Eastwood is occupied","The Dam is under attack","NCR is coming","Legion spotted at the Fort","Raiders attacking the outpost","Deathclaw sighting near town","Enclave patrol inbound")]!",\
+		"[pick("The reactor is melting down","Water supply contaminated","All districts lost","Radio silence from command","Vertibird down","Brotherhood moving in")]!!")
 
 	var/list/mob/living/carbon/people = list()
 	var/mob/living/carbon/person = null
@@ -1167,8 +1167,8 @@ GLOBAL_LIST_INIT(hallucination_list, list(
 			fakemob = target //ever been so lonely you had to haunt yourself?
 		if(fakemob)
 			sleep(rand(20, 50))
-			to_chat(target, "<span class='deadsay'><b>DEAD: [fakemob.name]</b> says, \"[pick("rip","why did i just drop dead?","hey [target.first_name()]","git gud","you too?","is the AI rogue?",\
-			"i[prob(50)?" fucking":""] hate [pick("blood cult", "clock cult", "revenants", "this round","this","myself","admins","you")]")]\"</span>")
+			to_chat(target, "<span class='deadsay'><b>DEAD: [fakemob.name]</b> says, \"[pick("rip","why did i just drop dead?","hey [target.first_name()]","git gud","you too?","did the reactor explode?",\
+			"i[prob(50)?" fucking":""] hate [pick("the Legion", "the NCR", "raiders", "this round","this","myself","admins","you","deathclaws","ghouls","the wasteland")]")]\"</span>")
 	sleep(rand(70,90))
 	target.set_screwyhud(SCREWYHUD_NONE)
 	target.SetKnockdown(0)

@@ -12,7 +12,7 @@
 	icon_living = "securitron"
 	icon_dead = "securitron_dead"
 	mob_armor = ARMOR_VALUE_ROBOT_SECURITY
-	maxHealth = 100 
+	maxHealth = 100
 	health = 100
 	sentience_type = SENTIENCE_BOSS
 	stamcrit_threshold = SIMPLEMOB_NO_STAMCRIT
@@ -21,7 +21,7 @@
 		MOB_EMP_BERSERK,
 		MOB_EMP_DAMAGE,
 		MOB_EMP_SCRAMBLE
-		)
+	)
 	speak_chance = 1
 	turns_per_move = 5
 	environment_smash = 0
@@ -39,7 +39,7 @@
 
 	retreat_distance = 2
 	//how far they pull back
-	
+
 	minimum_distance = 5
 	// how close you can get before they try to pull back
 
@@ -121,15 +121,23 @@
 	. = ..()
 	summon_backup(15)
 
-//Sentry Bot
+
+// ============================================================================
+// Sentry Bot
+// Uses: code/modules/f13/48x48_MS_mob_sprites.dmi
+// State: "Sentry"
+// Movement sprite removed: no icon_moving / movement-specific states
+// ============================================================================
+
 /mob/living/simple_animal/hostile/securitron/sentrybot
 	name = "sentry bot"
 	desc = "A pre-war military robot armed with a deadly gatling laser and covered in thick armor plating."
-	icon_state = "sentrybot"
-	icon_living = "sentrybot"
-	icon_dead = "sentrybot_dead"
+	icon = 'code/modules/f13/48x48_MS_mob_sprites.dmi'
+	icon_state = "Sentry"
+	icon_living = "Sentry"
+	icon_dead = "Sentry" // no dead state provided; keep consistent unless you have one
 	mob_armor = ARMOR_VALUE_ROBOT_SECURITY
-	maxHealth = 150 
+	maxHealth = 150
 	health = 150
 	stat_attack = UNCONSCIOUS
 	del_on_death = FALSE
@@ -150,7 +158,7 @@
 		'sound/f13npc/sentry/taunt4.ogg',
 		'sound/f13npc/sentry/taunt5.ogg',
 		'sound/f13npc/sentry/taunt6.ogg'
-		)
+	)
 	emote_taunt = list("spins its barrels")
 	aggrosound = list(
 		'sound/f13npc/sentry/aggro1.ogg',
@@ -158,19 +166,19 @@
 		'sound/f13npc/sentry/aggro3.ogg',
 		'sound/f13npc/sentry/aggro4.ogg',
 		'sound/f13npc/sentry/aggro5.ogg'
-		)
+	)
 	idlesound = list(
 		'sound/f13npc/sentry/idle1.ogg',
 		'sound/f13npc/sentry/idle2.ogg',
 		'sound/f13npc/sentry/idle3.ogg',
 		'sound/f13npc/sentry/idle4.ogg'
-		)
+	)
 	var/warned = FALSE
 	loot = list(
 		/obj/effect/decal/cleanable/robot_debris,
 		/obj/item/stack/crafting/electronicparts/five,
 		/obj/item/stock_parts/cell/ammo/mfc
-		)
+	)
 	projectile_sound_properties = list(
 		SP_VARY(FALSE),
 		SP_VOLUME(LASER_VOLUME),
@@ -184,10 +192,11 @@
 
 /mob/living/simple_animal/hostile/securitron/sentrybot/Life()
 	..()
-	if (!warned)
-		if (health <= 50)
+	if(!warned)
+		if(health <= 50)
 			warned = TRUE
 			playsound(src, 'sound/f13npc/sentry/systemfailure.ogg', 75, FALSE)
+
 
 // Lil chew-chew
 /mob/living/simple_animal/hostile/securitron/sentrybot/chew
@@ -225,6 +234,7 @@
 	emp_flags = list() //no emp instakill for you
 	projectiletype = /obj/item/projectile/beam/laser/pistol/ultraweak/chew/strong
 
+
 //Raider friendly Sentry bot
 /mob/living/simple_animal/hostile/securitron/sentrybot/nsb
 	name = "sentry bot"
@@ -249,6 +259,7 @@
 		SP_DISTANT_RANGE(SHOTGUN_RANGE_DISTANT)
 	)
 
+
 //Playable Sentrybot
 /mob/living/simple_animal/hostile/securitron/sentrybot/playable
 	health = 50   //El Beef
@@ -267,6 +278,7 @@
 
 /mob/living/simple_animal/hostile/securitron/sentrybot/playable/death()
 	return ..()
+
 
 //Junkers
 /mob/living/simple_animal/hostile/securitron/sentrybot/suicide

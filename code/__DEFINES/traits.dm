@@ -217,6 +217,8 @@
 #define TRAIT_POOR_AIM			"poor_aim"
 #define TRAIT_INSANE_AIM		"insane_aim" //they don't miss. they never miss. it was all part of their immaculate plan.
 #define SPREAD_CONTROL		"spread_control"
+#define TRAIT_RAID_PERMISSION_NCR	"raid_permission_ncr"	// Can raid NCR base
+#define TRAIT_RAID_PERMISSION_LEGION	"raid_permission_legion"	// Can raid Legion base
 #define TRAIT_PROSOPAGNOSIA		"prosopagnosia"
 #define TRAIT_DRUNK_HEALING		"drunk_healing"
 #define TRAIT_TAGGER			"tagger"

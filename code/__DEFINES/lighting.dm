@@ -26,6 +26,11 @@
 // Set to zero to disable soft lighting. Luminosity changes then work if it's lit at all.
 #define LIGHTING_SOFT_THRESHOLD 0
 
+// Fallout/Hail Mary post-processing toggles.
+// Keep these disabled by default for baseline BYOND lighting behavior.
+#define F13_ENABLE_AREA_GRADING 0
+#define F13_ENABLE_CINEMATIC_POSTFX 0
+
 // If I were you I'd leave this alone.
 #define LIGHTING_BASE_MATRIX \
 	list                     \

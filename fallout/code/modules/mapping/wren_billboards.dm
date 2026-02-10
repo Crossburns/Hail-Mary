@@ -97,4 +97,18 @@
 /obj/structure/billboard/boardedwell
     name = "Boarded up well"
     desc = "An old dryed up well that has been boarded up."
-    icon_state = "well" 
+    icon_state = "well"
+
+/obj/structure/billboard/massfusion
+	name = "Mass Fusion billboard"
+	desc = "A large pre-War advertisement for Mass Fusion. The nuclear energy company's logo still glows faintly in the wasteland sun."
+	icon = 'code/modules/f13/224x128_billboards.dmi'
+	icon_state = "Massfussion_billboard"
+	bound_width = 224
+	bound_height = 128
+	density = FALSE
+	layer = ABOVE_MOB_LAYER
+
+/obj/structure/billboard/massfusion/Initialize()
+	. = ..()
+	AddComponent(/datum/component/largetransparency, x_size = 7, y_size = 4) 

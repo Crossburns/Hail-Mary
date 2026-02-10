@@ -11,6 +11,10 @@
 					/obj/item/cartridge/janitor = 10,
 					/obj/item/cartridge/signal/toxins = 10,
 					/obj/item/cartridge/roboticist = 10,
+					/obj/item/pda_mod_chip/bioscan = 10,
+					/obj/item/pda_mod_chip/tracker = 10,
+					/obj/item/pda_mod_chip/gridlink = 10,
+					/obj/item/pda_mod_chip/radioplus = 10,
 					/obj/item/pda/heads = 10)
 	premium = list(/obj/item/cartridge/captain = 2,
 					/obj/item/cartridge/quartermaster = 2)
