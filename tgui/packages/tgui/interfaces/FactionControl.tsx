@@ -149,6 +149,33 @@ type PlayerFactionRow = {
   treasury: number;
 };
 
+type OpsPressureRow = {
+  district: string;
+  owner: string;
+  pressure: number;
+  tier: string;
+};
+
+type OpsRecommendedTask = {
+  id: string;
+  title: string;
+  district: string;
+  focus: string;
+  reason: string;
+  priority: number;
+};
+
+type OpsData = {
+  pressure_rows: OpsPressureRow[];
+  pressure_updated_ds_ago: number;
+  reactor_pressure: number;
+  weather_pressure: number;
+  fauna_pressure: number;
+  spawn_briefing: string[];
+  recommended_task: OpsRecommendedTask | null;
+  runtime_tick_ds_ago: number;
+};
+
 type Data = {
   faction: string;
   can_control: boolean;
@@ -185,11 +212,34 @@ type Data = {
   raidable_targets: RaidableTarget[];
   active_raids: ActiveRaid[];
   player_factions: PlayerFactionRow[];
+  ops?: OpsData;
 };
 
 export const FactionControl = (props, context) => {
   const { act, data } = useBackend<Data>(context);
   const [tab, setTab] = useLocalState(context, 'fc_tab', 'Districts');
+  const ops: OpsData = data?.ops || {
+    pressure_rows: [],
+    pressure_updated_ds_ago: -1,
+    reactor_pressure: 0,
+    weather_pressure: 0,
+    fauna_pressure: 0,
+    spawn_briefing: [],
+    recommended_task: null,
+    runtime_tick_ds_ago: -1,
+  };
+  const pressureRows = [...(ops.pressure_rows || [])].sort((a, b) => (b.pressure || 0) - (a.pressure || 0));
+  const pressureTierColor = (tier: string) => {
+    switch ((tier || '').toLowerCase()) {
+      case 'critical':
+      case 'high':
+        return 'bad';
+      case 'elevated':
+        return 'average';
+      default:
+        return 'good';
+    }
+  };
 
   if (!data) {
     return (
@@ -281,6 +331,62 @@ export const FactionControl = (props, context) => {
             <Box mb={1} color="average">
               District blackout routing is reactor-controlled now. Use reactor district load controllers for ON/OFF routing.
             </Box>
+            <Section title="Ops Snapshot" mb={2}>
+              <LabeledList>
+                <LabeledList.Item label="Reactor Pressure">{ops.reactor_pressure || 0}</LabeledList.Item>
+                <LabeledList.Item label="Weather Pressure">{ops.weather_pressure || 0}</LabeledList.Item>
+                <LabeledList.Item label="Fauna Pressure">{ops.fauna_pressure || 0}</LabeledList.Item>
+                <LabeledList.Item label="Pressure Updated">
+                  {ops.pressure_updated_ds_ago >= 0 ? `${ops.pressure_updated_ds_ago}s ago` : '-'}
+                </LabeledList.Item>
+                <LabeledList.Item label="Runtime Tick">
+                  {ops.runtime_tick_ds_ago >= 0 ? `${ops.runtime_tick_ds_ago}s ago` : '-'}
+                </LabeledList.Item>
+              </LabeledList>
+              {ops.recommended_task ? (
+                <Box mt={1}>
+                  <Box bold>{ops.recommended_task.title}</Box>
+                  <Box color="average">{ops.recommended_task.reason}</Box>
+                  <Box>
+                    Priority {ops.recommended_task.priority} | District {ops.recommended_task.district} | Focus{' '}
+                    {ops.recommended_task.focus}
+                  </Box>
+                </Box>
+              ) : (
+                <Box mt={1} color="average">
+                  No recommended task right now.
+                </Box>
+              )}
+              {!!(ops.spawn_briefing && ops.spawn_briefing.length) && (
+                <Box mt={1}>
+                  {(ops.spawn_briefing || []).map((line, index) => (
+                    <Box key={`briefing-${index}`} color="average">
+                      - {line}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+              {pressureRows.length > 0 && (
+                <Table mt={1}>
+                  <Table.Row header>
+                    <Table.Cell>District</Table.Cell>
+                    <Table.Cell>Owner</Table.Cell>
+                    <Table.Cell>Pressure</Table.Cell>
+                    <Table.Cell>Tier</Table.Cell>
+                  </Table.Row>
+                  {pressureRows.map((row) => (
+                    <Table.Row key={`ops-pressure-${row.district}`}>
+                      <Table.Cell>{row.district}</Table.Cell>
+                      <Table.Cell>{row.owner || '-'}</Table.Cell>
+                      <Table.Cell>{row.pressure}</Table.Cell>
+                      <Table.Cell>
+                        <Box color={pressureTierColor(row.tier)}>{(row.tier || 'stable').toUpperCase()}</Box>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table>
+              )}
+            </Section>
             {!(data.rows && data.rows.length) ? (
               <Box color="average">No districts discovered yet. Claim a relay node first.</Box>
             ) : (
