@@ -166,9 +166,10 @@
 	// Clear cocoon target reference
 	cocoon_target = null
 
-	// CRITICAL FIX: Do NOT qdel the wrap here - let parent handle it
-	// Just clear the reference to break the cycle
-	wrap = null
+	// Explicitly remove and delete nurse-specific ability holder.
+	if(wrap)
+		RemoveAbility(wrap)
+		QDEL_NULL(wrap)
 
 	// Clear actions with proper cleanup
 	if(lay_eggs)

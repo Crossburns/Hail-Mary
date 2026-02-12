@@ -1,8 +1,8 @@
 /obj/machinery/bounty_pod
 	name = "Wastland Bounty Pod"
 	desc = "This is Wastland Bounty Pod"
-	icon = 'icons/obj/machines/teleporter.dmi'
-	icon_state = "teleport"
+	icon = 'icons/structure/terminals.dmi'
+	icon_state = "Bounty_pad"
 	anchored = 1
 	density = 0
 	verb_say = "beeps"

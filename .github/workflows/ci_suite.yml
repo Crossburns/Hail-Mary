@@ -45,6 +45,7 @@ jobs:
           tgui/bin/tgui --lint
           tgui/bin/tgui --test
           bash tools/ci/check_grep.sh
+          bash tools/ci/check_roadmap_recovery.sh
           tools/bootstrap/python -m dmi.test
           tools/bootstrap/python -m mapmerge2.dmm_test
           ~/dreamchecker 2>&1 | bash tools/ci/annotate_dm.sh
@@ -69,6 +70,7 @@ jobs:
           bash tools/ci/install_byond.sh
           source $HOME/BYOND/byond/bin/byondsetup
           python3 tools/ci/template_dm_generator.py
+          tools/build/build dm -DCIBUILDING -DCITESTING
           tools/build/build dm -DCIBUILDING -DCITESTING -DALL_MAPS
 
   # uncomment when they fix auxmos build

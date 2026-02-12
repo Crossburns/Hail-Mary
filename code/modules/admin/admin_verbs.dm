@@ -77,6 +77,10 @@ GLOBAL_PROTECT(admin_verbs_admin)
 	/client/proc/cmd_grid_set_online,
 	/client/proc/cmd_grid_adjust_resources,
 	/client/proc/cmd_grid_set_district_power,
+	/client/proc/cmd_grid_rebuild_district_bindings,
+	/client/proc/cmd_grid_audit_district_nodes,
+	/client/proc/cmd_grid_faction_diagnostics,
+	/client/proc/cmd_grid_ops_snapshot,
 	/datum/admins/proc/open_shuttlepanel, /* Opens shuttle manipulator UI */
 	/client/proc/respawn_character,
 	/client/proc/secrets,

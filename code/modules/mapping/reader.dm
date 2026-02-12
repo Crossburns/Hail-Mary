@@ -422,8 +422,15 @@
 
 	var/first_turf_index = 1
 	if(LAZYLEN(members) && LAZYACCESS(members, first_turf_index))
-		while(!ispath(members[first_turf_index], /turf)) //find first /turf object in members
+		while(first_turf_index <= members.len && !ispath(members[first_turf_index], /turf)) //find first /turf object in members
 			first_turf_index++
+
+	// Some malformed/legacy map tiles may contain only objs + area and no turf.
+	// In that case, instantiate non-area atoms on the existing turf and skip turf pass.
+	if(first_turf_index > members.len)
+		for(index in 1 to members.len - 1) // Last item is an /area
+			instance_atom(members[index], members_attributes[index], crds, no_changeturf, placeOnTop, turn_angle, swap_xy, invert_y, invert_x)
+		return
 
 	//turn off base new Initialization until the whole thing is loaded
 	SSatoms.map_loader_begin()

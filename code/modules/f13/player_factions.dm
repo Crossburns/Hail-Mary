@@ -481,7 +481,7 @@ GLOBAL_LIST_EMPTY(player_faction_district_nodes)
 /obj/machinery/f13/player_faction_console
 	name = "faction control console"
 	desc = "A console for managing a player-created faction."
-	icon = 'code/modules/f13/terminals.dmi'
+	icon = 'icons/structure/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE

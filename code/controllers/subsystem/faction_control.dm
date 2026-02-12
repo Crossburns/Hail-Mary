@@ -177,6 +177,8 @@ SUBSYSTEM_DEF(faction_control)
 	var/list/faction_raid_cooldown = list()
 	/// world.time scheduler for district node/grid desync reconciliation
 	var/next_node_reconcile = 0
+	/// unified ops integration runtime (pressure/tasks/extensions)
+	var/datum/f13_ops_runtime/ops_runtime = null
 
 /datum/controller/subsystem/faction_control/Initialize(timeofday)
 	. = ..()
@@ -189,6 +191,9 @@ SUBSYSTEM_DEF(faction_control)
 	next_hazard_roll = world.time + FACTION_CTRL_HAZARD_INTERVAL
 	next_grid_pressure_check = world.time + FACTION_CTRL_GRID_PRESSURE_CHECK
 	next_node_reconcile = world.time + FACTION_CTRL_NODE_RECONCILE_EVERY
+	if(!ops_runtime)
+		ops_runtime = new
+	ops_runtime.bootstrap(src)
 
 /datum/controller/subsystem/faction_control/fire(resumed = FALSE)
 	if(world.time >= next_payout)
@@ -225,6 +230,8 @@ SUBSYSTEM_DEF(faction_control)
 	process_capture_nodes()
 	process_resource_pads()
 	process_intel_towers()
+	if(ops_runtime)
+		ops_runtime.tick(src)
 
 /datum/controller/subsystem/faction_control/proc/bootstrap_districts()
 	if(!islist(district_owner)) district_owner = list()
@@ -2242,6 +2249,25 @@ SUBSYSTEM_DEF(faction_control)
 		))
 	return rows
 
+/datum/controller/subsystem/faction_control/proc/get_district_snapshot(district)
+	if(!district)
+		return null
+	if(!ops_runtime)
+		ops_runtime = new
+		ops_runtime.bootstrap(src)
+	return ops_runtime.get_district_snapshot(src, district)
+
+/datum/controller/subsystem/faction_control/proc/list_district_snapshots()
+	if(!ops_runtime)
+		ops_runtime = new
+		ops_runtime.bootstrap(src)
+	return ops_runtime.list_district_snapshots(src)
+
+/datum/controller/subsystem/faction_control/proc/get_recommended_task_for_mob(mob/user)
+	if(!ops_runtime || !ops_runtime.task_broker)
+		return null
+	return ops_runtime.task_broker.recommend_task(user, src, ops_runtime.pressure_model)
+
 /datum/controller/subsystem/faction_control/proc/get_faction_dashboard(mob/user)
 	var/list/data = list()
 	var/f = get_mob_faction(user)
@@ -2319,6 +2345,10 @@ SUBSYSTEM_DEF(faction_control)
 
 	// Player faction data for UI display
 	data["player_factions"] = get_all_player_factions_ui_data()
+	if(ops_runtime)
+		data["ops"] = ops_runtime.get_dashboard_extension(src, user, f)
+	else
+		data["ops"] = list()
 
 	return data
 

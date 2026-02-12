@@ -25,7 +25,7 @@
 /obj/machinery/bounty_machine/faction/coureer
 	name = "Parcel Terminal"
 	desc = "This terminal uses a courier to receive new parcels."
-	icon_state = "terminal"
+	icon_state = "terminal_classic"
 	free_access = TRUE
 	quest_type = /datum/bounty_quest/faction/courier
 	price_list = list(

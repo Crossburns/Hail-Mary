@@ -79,12 +79,15 @@
 #define FAUNA_MATERIALIZE_BUDGET 4
 #define FAUNA_MATERIALIZE_RANGE 18
 #define FAUNA_MATERIALIZE_MAX_LOCAL 2
+#define FAUNA_MATERIALIZE_CENTER_CAP 12
+#define FAUNA_MATERIALIZE_Z_BUCKET_SCAN_LIMIT 400
 #define FAUNA_MATERIALIZE_MARKER_SEARCH 28
 #define FAUNA_MATERIALIZE_MARKER_SPAWN_MIN 10
 #define FAUNA_MATERIALIZE_MARKER_SPAWN_MAX 24
 #define FAUNA_SPAWN_PLAYER_SAFE_DIST 12
 #define FAUNA_MARKER_BOOTSTRAP_BURST 1
 #define FAUNA_MARKER_BOOTSTRAP_COOLDOWN 25 MINUTES
+#define FAUNA_MARKER_PROFILE_REBUILD_EVERY 5 MINUTES
 #define FAUNA_ZONE_FOOD_BASE 50
 #define FAUNA_ZONE_FOOD_MIN 0
 #define FAUNA_ZONE_FOOD_MAX 100
@@ -99,10 +102,15 @@
 #define FAUNA_CARRY_OVERCAP_BUFFER 1.2
 #define FAUNA_ROUND_EARLY_MIN 45
 #define FAUNA_ROUND_MID_MIN 180
+#define FAUNA_HUMAN_TRACK_EVERY 2
 #define FAUNA_PLAYER_IMPACT_EVERY 10
 #define FAUNA_HUNTING_DECAY 0.7
 #define FAUNA_CARRION_DECAY 0.8
 #define FAUNA_IMPACT_RANGE 10
+#define FAUNA_STARTUP_WARMUP (8 MINUTES)
+#define FAUNA_BEHAVIOR_BASE_BUDGET 120
+#define FAUNA_BEHAVIOR_STARTUP_MIN_BUDGET 20
+#define FAUNA_BEHAVIOR_ROSTER_REBUILD_EVERY (2 MINUTES)
 
 // ---- Roaming (NEW) ----
 #define FAUNA_ROAM_MIN 30
@@ -146,6 +154,11 @@
 #define FAUNA_DEBUG_SUMMARY_EVERY 150
 #define FAUNA_DEN_QUALITY_MAX 100
 #define FAUNA_DEN_QUALITY_DECAY 0.2
+
+// ---- Hybrid Pathing (macro via preset nodes, micro via HM stepping) ----
+#define FAUNA_HYBRID_MACRO_DIST 16
+#define FAUNA_HYBRID_NODE_LINK_RANGE 24
+#define FAUNA_HYBRID_REBUILD_EVERY (15 MINUTES)
 
 // ---- Role Types ----
 #define FAUNA_ROLE_PREY 1
@@ -194,6 +207,11 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	var/list/home_quality = list()     // "\ref[mob]" -> 0..100
 	var/list/home_backup = list()      // "\ref[mob]" -> turf
 	var/list/home_season = list()      // "\ref[mob]" -> season index
+	var/list/hybrid_nodes_by_z = list()    // "z:[z]" -> list(turf)
+	var/list/hybrid_edges_by_node = list() // "x,y,z" -> list(turf)
+	var/list/hybrid_route_cache = list()   // "\ref[mob]" -> list(turf) remaining waypoints
+	var/list/hybrid_route_goal = list()    // "\ref[mob]" -> "x,y,z"
+	var/next_hybrid_rebuild = 0
 
 	var/list/z_last_human = list()
 	var/list/z_heat = list()
@@ -205,8 +223,10 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	var/list/zone_hunting_pressure = list() // "z|habitat" -> 0..100
 	var/list/zone_carrion_level = list()    // "z|habitat" -> 0..100
 	var/list/zone_danger_memory = list()    // "z|habitat" -> 0..100
+	var/list/zone_marker_profile_cache = list() // "z|habitat" -> profile list
 	var/list/extinction_until = list()      // "z|habitat|species" -> world.time
 	var/list/marker_bootstrap_until = list() // "\ref[turf]" -> world.time
+	var/next_marker_profile_rebuild = 0
 	var/virtual_seeded = FALSE
 	var/virtual_tick_multiplier = 1.0
 	var/materialize_multiplier = 1.0
@@ -215,6 +235,10 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 
 	var/next_repro_tick = 0
 	var/process_cycle = 0
+	var/startup_warmup_ends = 0
+	var/list/fauna_behavior_roster = list()
+	var/fauna_behavior_cursor = 1
+	var/next_behavior_roster_rebuild = 0
 
 	var/debug_logging = FALSE
 
@@ -240,6 +264,196 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	if(!T)
 		return null
 	return "[T.x],[T.y],[T.z]"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/turf_from_key(key)
+	if(!istext(key) || !length(key))
+		return null
+	var/list/parts = splittext(key, ",")
+	if(!islist(parts) || parts.len < 3)
+		return null
+	var/x = text2num(parts[1])
+	var/y = text2num(parts[2])
+	var/z = text2num(parts[3])
+	if(isnull(x) || isnull(y) || isnull(z))
+		return null
+	return locate(x, y, z)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/turf_pair_key(turf/A, turf/B)
+	if(!A || !B)
+		return null
+	var/a = turf_key(A)
+	var/b = turf_key(B)
+	if(!a || !b)
+		return null
+	if(a < b)
+		return "[a]|[b]"
+	return "[b]|[a]"
+
+/datum/controller/subsystem/fauna_ecosystem/proc/clear_path_line(turf/A, turf/B)
+	if(!A || !B || A.z != B.z)
+		return FALSE
+	var/turf/current = A
+	var/guard = 0
+	while(current && current != B && guard++ < FAUNA_HYBRID_NODE_LINK_RANGE + 8)
+		if(current.density)
+			return FALSE
+		current = get_step_towards(current, B)
+	if(!current || current != B)
+		return FALSE
+	return !B.density
+
+/datum/controller/subsystem/fauna_ecosystem/proc/rebuild_hybrid_node_graph()
+	hybrid_nodes_by_z = list()
+	hybrid_edges_by_node = list()
+	if(!islist(GLOB.fauna_presets_by_z))
+		next_hybrid_rebuild = world.time + FAUNA_HYBRID_REBUILD_EVERY
+		return
+
+	for(var/z in 1 to world.maxz)
+		var/z_key = "z:[z]"
+		var/list/z_bucket = GLOB.fauna_presets_by_z[z_key]
+		if(!islist(z_bucket) || !length(z_bucket))
+			continue
+		var/list/nodes = list()
+		for(var/datum/fauna_preset_runtime/P in z_bucket)
+			if(!P || QDELETED(P))
+				continue
+			var/turf/T = P.turf_ref
+			if(!T || QDELETED(T) || T.density)
+				continue
+			if(P.fauna_no_spawn)
+				continue
+			nodes += T
+		if(length(nodes))
+			hybrid_nodes_by_z[z_key] = nodes
+
+	var/list/los_cache = list()
+	for(var/zkey in hybrid_nodes_by_z)
+		var/list/nodes = hybrid_nodes_by_z[zkey]
+		if(!islist(nodes) || length(nodes) < 2)
+			continue
+		for(var/turf/A as anything in nodes)
+			var/a_key = turf_key(A)
+			if(!a_key)
+				continue
+			if(!islist(hybrid_edges_by_node[a_key]))
+				hybrid_edges_by_node[a_key] = list()
+			for(var/turf/B as anything in nodes)
+				if(A == B)
+					continue
+				if(get_dist(A, B) > FAUNA_HYBRID_NODE_LINK_RANGE)
+					continue
+				var/pair_key = turf_pair_key(A, B)
+				if(!pair_key)
+					continue
+				var/cached_vis = los_cache[pair_key]
+				if(isnull(cached_vis))
+					cached_vis = clear_path_line(A, B)
+					los_cache[pair_key] = cached_vis
+				if(!cached_vis)
+					continue
+				hybrid_edges_by_node[a_key] += B
+
+	next_hybrid_rebuild = world.time + FAUNA_HYBRID_REBUILD_EVERY
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_nearest_hybrid_node(turf/from_turf, max_dist = FAUNA_HYBRID_NODE_LINK_RANGE)
+	if(!from_turf)
+		return null
+	var/list/nodes = hybrid_nodes_by_z["z:[from_turf.z]"]
+	if(!islist(nodes) || !length(nodes))
+		return null
+	var/turf/best = null
+	var/best_d = max_dist + 1
+	for(var/turf/N as anything in nodes)
+		if(!N || QDELETED(N))
+			continue
+		var/d = get_dist(from_turf, N)
+		if(d < best_d)
+			best = N
+			best_d = d
+	return best
+
+/datum/controller/subsystem/fauna_ecosystem/proc/build_hybrid_route(turf/start_node, turf/goal_node)
+	if(!start_node || !goal_node)
+		return null
+	if(start_node == goal_node)
+		return list(goal_node)
+
+	var/start_key = turf_key(start_node)
+	var/goal_key = turf_key(goal_node)
+	if(!start_key || !goal_key)
+		return null
+
+	var/list/open = list(start_key)
+	var/list/visited = list(start_key = TRUE)
+	var/list/parent = list()
+
+	while(length(open))
+		var/current_key = open[1]
+		open.Cut(1, 2)
+		if(current_key == goal_key)
+			break
+		var/list/neighbors = hybrid_edges_by_node[current_key]
+		if(!islist(neighbors) || !length(neighbors))
+			continue
+		for(var/turf/N as anything in neighbors)
+			if(!N || QDELETED(N))
+				continue
+			var/n_key = turf_key(N)
+			if(!n_key || visited[n_key])
+				continue
+			visited[n_key] = TRUE
+			parent[n_key] = current_key
+			open += n_key
+
+	if(!visited[goal_key])
+		return null
+
+	var/list/route = list()
+	var/walk_key = goal_key
+	while(walk_key && walk_key != start_key)
+		var/turf/T = turf_from_key(walk_key)
+		if(T)
+			route.Insert(1, T)
+		walk_key = parent[walk_key]
+	return route
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_hybrid_macro_waypoint(mob/living/simple_animal/hostile/M, atom/final_target)
+	if(!M || !final_target)
+		return null
+	var/turf/my_turf = get_turf(M)
+	var/turf/goal_turf = get_turf(final_target)
+	if(!my_turf || !goal_turf || my_turf.z != goal_turf.z)
+		return null
+	if(get_dist(my_turf, goal_turf) < FAUNA_HYBRID_MACRO_DIST)
+		return null
+
+	var/mkey = mob_key(M)
+	if(!mkey)
+		return null
+	var/goal_key = turf_key(goal_turf)
+	var/list/cached = hybrid_route_cache[mkey]
+	if(islist(cached) && length(cached) && hybrid_route_goal[mkey] == goal_key)
+		var/turf/head = cached[1]
+		if(!head || QDELETED(head))
+			cached.Cut(1, 2)
+		else if(get_dist(my_turf, head) <= 2)
+			cached.Cut(1, 2)
+		if(length(cached))
+			hybrid_route_cache[mkey] = cached
+			return cached[1]
+		hybrid_route_cache -= mkey
+
+	var/turf/start_node = get_nearest_hybrid_node(my_turf)
+	var/turf/end_node = get_nearest_hybrid_node(goal_turf)
+	if(!start_node || !end_node)
+		return null
+	var/list/route = build_hybrid_route(start_node, end_node)
+	if(!islist(route) || !length(route))
+		return null
+	hybrid_route_cache[mkey] = route
+	hybrid_route_goal[mkey] = goal_key
+	return route[1]
 
 /datum/controller/subsystem/fauna_ecosystem/proc/get_habitat_for_area(area/A)
 	if(!A) return "other"
@@ -374,60 +588,103 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		total += (virtual_population[pop_key(z, habitat, S.id)] || 0)
 	return total
 
-/datum/controller/subsystem/fauna_ecosystem/proc/get_zone_marker_profile(z, habitat)
-	var/list/profile = list()
-	profile["spawn_mult"] = 1.0
-	profile["forage_bonus"] = 0.0
-	profile["migration_bias"] = 0.0
-	profile["water_bonus"] = 0.0
-	profile["marker_count"] = 0
-	profile["dead_zone_weight"] = 0.0
+/datum/controller/subsystem/fauna_ecosystem/proc/rebuild_zone_marker_profiles()
+	var/list/habitats = list("wasteland", "cave", "building", "other")
+	zone_marker_profile_cache = list()
+
+	for(var/z in 1 to world.maxz)
+		for(var/habitat in habitats)
+			zone_marker_profile_cache[zone_key(z, habitat)] = list(
+				"spawn_mult" = 1.0,
+				"forage_bonus" = 0.0,
+				"migration_bias" = 0.0,
+				"water_bonus" = 0.0,
+				"marker_count" = 0,
+				"dead_zone_weight" = 0.0
+			)
+
 	if(!islist(GLOB.fauna_presets_by_z))
-		return profile
-	var/z_key = "z:[z]"
-	var/list/z_bucket = GLOB.fauna_presets_by_z[z_key]
-	if(!islist(z_bucket) || !length(z_bucket))
+		return
+
+	for(var/z in 1 to world.maxz)
+		var/z_key = "z:[z]"
+		var/list/z_bucket = GLOB.fauna_presets_by_z[z_key]
+		if(!islist(z_bucket) || !length(z_bucket))
+			continue
+
+		var/list/aggregate = list()
+		for(var/habitat in habitats)
+			aggregate[habitat] = list(
+				"count" = 0,
+				"dead_count" = 0,
+				"spawn_sum" = 0.0,
+				"forage_sum" = 0.0,
+				"migration_sum" = 0.0,
+				"water_sum" = 0.0
+			)
+
+		for(var/datum/fauna_preset_runtime/P in z_bucket)
+			if(!P || QDELETED(P))
+				continue
+
+			var/list/target_habitats = habitats
+			if(istext(P.fauna_habitat))
+				var/preset_habitat = lowertext("[P.fauna_habitat]")
+				if(!(preset_habitat in habitats))
+					continue
+				target_habitats = list(preset_habitat)
+
+			var/spawn_mult = 1.0
+			if(isnum(P.fauna_spawn_mult))
+				spawn_mult = max(0.1, P.fauna_spawn_mult)
+
+			var/forage_bonus = 0.0
+			if(isnum(P.fauna_forage_bonus))
+				forage_bonus += P.fauna_forage_bonus
+			if(P.fauna_forage_rich)
+				forage_bonus += 4
+
+			var/migration_bias = isnum(P.fauna_migration_bias) ? P.fauna_migration_bias : 0.0
+			var/water_bonus = P.water_source ? 2.0 : 0.0
+			var/dead_weight = P.fauna_no_spawn ? 1 : 0
+
+			for(var/habitat in target_habitats)
+				var/list/hab_agg = aggregate[habitat]
+				hab_agg["count"] = (hab_agg["count"] || 0) + 1
+				hab_agg["spawn_sum"] = (hab_agg["spawn_sum"] || 0) + spawn_mult
+				hab_agg["forage_sum"] = (hab_agg["forage_sum"] || 0) + forage_bonus
+				hab_agg["migration_sum"] = (hab_agg["migration_sum"] || 0) + migration_bias
+				hab_agg["water_sum"] = (hab_agg["water_sum"] || 0) + water_bonus
+				hab_agg["dead_count"] = (hab_agg["dead_count"] || 0) + dead_weight
+
+		for(var/habitat in habitats)
+			var/list/hab_agg = aggregate[habitat]
+			var/count = hab_agg["count"] || 0
+			if(count <= 0)
+				continue
+			var/list/profile = zone_marker_profile_cache[zone_key(z, habitat)]
+			profile["marker_count"] = count
+			profile["spawn_mult"] = (hab_agg["spawn_sum"] || 0) / count
+			profile["forage_bonus"] = (hab_agg["forage_sum"] || 0) / count
+			profile["migration_bias"] = (hab_agg["migration_sum"] || 0) / count
+			profile["water_bonus"] = (hab_agg["water_sum"] || 0) / count
+			profile["dead_zone_weight"] = (hab_agg["dead_count"] || 0) / count
+
+/datum/controller/subsystem/fauna_ecosystem/proc/get_zone_marker_profile(z, habitat)
+	var/cache_key = zone_key(z, habitat)
+	var/list/profile = zone_marker_profile_cache[cache_key]
+	if(islist(profile))
 		return profile
 
-	var/count = 0
-	var/dead_count = 0
-	var/spawn_sum = 0.0
-	var/forage_sum = 0.0
-	var/migration_sum = 0.0
-	var/water_sum = 0.0
-	for(var/datum/fauna_preset_runtime/P in z_bucket)
-		if(!P || QDELETED(P))
-			continue
-		if(istext(P.fauna_habitat))
-			var/preset_hab = lowertext("[P.fauna_habitat]")
-			if(preset_hab != habitat)
-				continue
-		count++
-		var/spawn_mult = 1.0
-		if(isnum(P.fauna_spawn_mult))
-			spawn_mult = max(0.1, P.fauna_spawn_mult)
-		spawn_sum += spawn_mult
-		var/forage_bonus = 0.0
-		if(isnum(P.fauna_forage_bonus))
-			forage_bonus += P.fauna_forage_bonus
-		if(P.fauna_forage_rich)
-			forage_bonus += 4
-		forage_sum += forage_bonus
-		if(isnum(P.fauna_migration_bias))
-			migration_sum += P.fauna_migration_bias
-		if(P.water_source)
-			water_sum += 2
-		if(P.fauna_no_spawn)
-			dead_count++
-	if(count <= 0)
-		return profile
-	profile["marker_count"] = count
-	profile["spawn_mult"] = spawn_sum / count
-	profile["forage_bonus"] = forage_sum / count
-	profile["migration_bias"] = migration_sum / count
-	profile["water_bonus"] = water_sum / count
-	profile["dead_zone_weight"] = dead_count / count
-	return profile
+	// Fallback default if cache is unavailable.
+	return list(
+		"spawn_mult" = 1.0,
+		"forage_bonus" = 0.0,
+		"migration_bias" = 0.0,
+		"water_bonus" = 0.0,
+		"marker_count" = 0,
+		"dead_zone_weight" = 0.0
+	)
 
 /datum/controller/subsystem/fauna_ecosystem/proc/get_species_pop_on_z(datum/fauna_species/S, z, exclude_habitat = null)
 	if(!S) return 0
@@ -627,7 +884,11 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 
 	// Decay/regenerate zone resources and pressure with weather/grid + marker coupling.
 	for(var/z in 1 to world.maxz)
+		if(MC_TICK_CHECK)
+			return
 		for(var/habitat in habitats)
+			if(MC_TICK_CHECK)
+				return
 			ensure_zone_state(z, habitat)
 			var/list/profile = get_zone_marker_profile(z, habitat)
 			var/zkey = zone_key(z, habitat)
@@ -674,7 +935,11 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	// Species-level virtual growth/decline/migration.
 	var/list/migration_deltas = list() // pop_key -> signed delta
 	for(var/z in 1 to world.maxz)
+		if(MC_TICK_CHECK)
+			return
 		for(var/habitat in habitats)
+			if(MC_TICK_CHECK)
+				return
 			ensure_zone_state(z, habitat)
 			var/list/profile = get_zone_marker_profile(z, habitat)
 			var/zkey = zone_key(z, habitat)
@@ -685,6 +950,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 			var/danger = zone_danger_memory[zkey] || 0
 			var/prey_total = get_zone_prey_total(z, habitat)
 			for(var/species_id in species_defs)
+				if(MC_TICK_CHECK)
+					return
 				var/datum/fauna_species/S = species_defs[species_id]
 				if(!S)
 					continue
@@ -813,6 +1080,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 						ensure_zone_state(z, next_hab)
 
 	for(var/mkey in migration_deltas)
+		if(MC_TICK_CHECK)
+			return
 		var/new_value = max(0, (virtual_population[mkey] || 0) + migration_deltas[mkey])
 		virtual_population[mkey] = new_value
 
@@ -858,7 +1127,9 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		marker_bootstrap_until = list()
 	var/spawn_budget = max(0, round(FAUNA_MATERIALIZE_BUDGET * materialize_multiplier))
 	var/spawned_total = 0
-	for(var/mob/living/carbon/human/H in world)
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
+		if(MC_TICK_CHECK)
+			return
 		if(spawn_budget <= 0) break
 		if(QDELETED(H) || H.stat) continue
 		var/turf/HT = get_turf(H)
@@ -867,6 +1138,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		// One-shot marker bootstrap: when a player first approaches a marker cluster,
 		// force a small off-screen burst so the area "comes alive" predictably.
 		for(var/turf/center in centers)
+			if(MC_TICK_CHECK)
+				return
 			if(spawn_budget <= 0)
 				break
 			var/center_key = turf_key(center)
@@ -882,6 +1155,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 			var/z = center.z
 			var/booted_here = 0
 			for(var/boot_i in 1 to FAUNA_MARKER_BOOTSTRAP_BURST)
+				if(MC_TICK_CHECK)
+					return
 				if(spawn_budget <= 0)
 					break
 				var/datum/fauna_species/best_species = null
@@ -921,6 +1196,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 				break
 		// First pass: deterministic marker-driven spawn to avoid long "nothing happens" stretches.
 		for(var/turf/center in centers)
+			if(MC_TICK_CHECK)
+				return
 			if(spawn_budget <= 0) break
 			var/habitat = get_habitat_for_turf(center)
 			var/area/A = get_area(center)
@@ -959,6 +1236,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		if(spawned_total >= max(1, round(2 * materialize_multiplier)))
 			break
 		for(var/turf/center in centers)
+			if(MC_TICK_CHECK)
+				return
 			if(spawn_budget <= 0) break
 			var/habitat = get_habitat_for_turf(center)
 			var/area/A = get_area(center)
@@ -974,6 +1253,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 				if(prey_fallback && !(prey_fallback in candidate_species) && prob(30))
 					candidate_species += prey_fallback
 			for(var/datum/fauna_species/S in candidate_species)
+				if(MC_TICK_CHECK)
+					return
 				if(spawn_budget <= 0)
 					break
 				if(!S)
@@ -1013,6 +1294,19 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 	var/z_key = "z:[around_turf.z]"
 	var/list/z_bucket = GLOB.fauna_presets_by_z[z_key]
 	if(islist(z_bucket) && length(z_bucket))
+		// If mapper placed very many presets, scan local turf keys instead of the whole z bucket.
+		if(length(z_bucket) > FAUNA_MATERIALIZE_Z_BUCKET_SCAN_LIMIT && islist(GLOB.fauna_presets_by_turf))
+			for(var/turf/T in range(FAUNA_MATERIALIZE_MARKER_SEARCH, around_turf))
+				var/key = turf_key(T)
+				if(!key)
+					continue
+				var/datum/fauna_preset_runtime/P_local = GLOB.fauna_presets_by_turf[key]
+				if(!istype(P_local, /datum/fauna_preset_runtime) || QDELETED(P_local))
+					continue
+				centers += T
+				if(length(centers) >= FAUNA_MATERIALIZE_CENTER_CAP)
+					break
+			return centers
 		for(var/datum/fauna_preset_runtime/P in z_bucket)
 			if(!P || QDELETED(P))
 				continue
@@ -1021,6 +1315,8 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 				continue
 			if(get_dist(around_turf, target) <= FAUNA_MATERIALIZE_MARKER_SEARCH)
 				centers += target
+				if(length(centers) >= FAUNA_MATERIALIZE_CENTER_CAP)
+					break
 		// Marker-driven maps should only materialize from nearby markers.
 		return centers
 	// No preset markers at all on this z-level: fallback to player vicinity behavior.
@@ -1342,6 +1638,13 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		if(curved && is_valid_turf(curved))
 			final_target = curved
 
+	// Hybrid pathing:
+	// 1) macro route across mapper fauna preset nodes (cheap long-range steering)
+	// 2) micro steering remains HM local step logic.
+	var/turf/macro_waypoint = get_hybrid_macro_waypoint(M, final_target)
+	if(macro_waypoint)
+		final_target = macro_waypoint
+
 	var/d = choose_move_direction(M, final_target)
 	if(!d)
 		return
@@ -1611,6 +1914,12 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		z_heat[zkey] = 0
 
 	build_species()
+	rebuild_hybrid_node_graph()
+	rebuild_zone_marker_profiles()
+	next_marker_profile_rebuild = world.time + FAUNA_MARKER_PROFILE_REBUILD_EVERY
+	startup_warmup_ends = world.time + FAUNA_STARTUP_WARMUP
+	rebuild_behavior_roster()
+	next_behavior_roster_rebuild = world.time + FAUNA_BEHAVIOR_ROSTER_REBUILD_EVERY
 
 	next_repro_tick = world.time + FAUNA_REPRO_EVERY
 
@@ -1658,31 +1967,87 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 			return S
 	return null
 
+/datum/controller/subsystem/fauna_ecosystem/proc/get_startup_scalar()
+	if(startup_warmup_ends <= 0)
+		return 1
+	if(world.time >= startup_warmup_ends)
+		return 1
+	var/remaining = max(0, startup_warmup_ends - world.time)
+	var/total = max(1, FAUNA_STARTUP_WARMUP)
+	return clamp(1 - (remaining / total), 0, 1)
+
+/datum/controller/subsystem/fauna_ecosystem/proc/rebuild_behavior_roster()
+	fauna_behavior_roster = list()
+	for(var/mob/living/simple_animal/hostile/M in world)
+		if(QDELETED(M) || M.stat)
+			continue
+		if(!get_species_for_mob(M))
+			continue
+		fauna_behavior_roster += M
+	var/len = length(fauna_behavior_roster)
+	if(len <= 0)
+		fauna_behavior_cursor = 1
+	else
+		fauna_behavior_cursor = clamp(fauna_behavior_cursor, 1, len)
+	next_behavior_roster_rebuild = world.time + FAUNA_BEHAVIOR_ROSTER_REBUILD_EVERY
+
 // ============== MAIN LOOP ==============
 
 /datum/controller/subsystem/fauna_ecosystem/fire(resumed = FALSE)
 	process_cycle++
 
+	var/startup_scalar = get_startup_scalar()
+	var/effective_virtual_multiplier = max(0.15, virtual_tick_multiplier * (0.35 + (startup_scalar * 0.65)))
+	var/effective_materialize_multiplier = max(0.15, materialize_multiplier * (0.25 + (startup_scalar * 0.75)))
+
 	if(debug_logging && process_cycle % 20 == 0)
 		log_world("FAUNA: Tick [process_cycle] - [length(packs)] packs")
 
-	track_humans()
+	if(process_cycle % FAUNA_HUMAN_TRACK_EVERY == 0)
+		track_humans()
+		if(MC_TICK_CHECK)
+			return
+	if(world.time >= next_hybrid_rebuild)
+		rebuild_hybrid_node_graph()
+		if(MC_TICK_CHECK)
+			return
+	if(world.time >= next_marker_profile_rebuild)
+		rebuild_zone_marker_profiles()
+		next_marker_profile_rebuild = world.time + FAUNA_MARKER_PROFILE_REBUILD_EVERY
+		if(MC_TICK_CHECK)
+			return
+	if(world.time >= next_behavior_roster_rebuild)
+		rebuild_behavior_roster()
+		if(MC_TICK_CHECK)
+			return
 	if(process_cycle % FAUNA_PLAYER_IMPACT_EVERY == 0)
 		process_player_impact()
-	var/virtual_every = max(1, round(FAUNA_VIRTUAL_TICK_EVERY / max(0.1, virtual_tick_multiplier)))
+		if(MC_TICK_CHECK)
+			return
+	var/virtual_every = max(1, round(FAUNA_VIRTUAL_TICK_EVERY / max(0.1, effective_virtual_multiplier)))
 	if(process_cycle % virtual_every == 0)
 		process_virtual_ecosystem()
-	process_fauna_behaviors()
-	var/materialize_every = max(1, round(FAUNA_MATERIALIZE_EVERY / max(0.1, materialize_multiplier)))
+		if(MC_TICK_CHECK)
+			return
+	process_fauna_behaviors(startup_scalar)
+	if(MC_TICK_CHECK)
+		return
+	var/materialize_every = max(1, round(FAUNA_MATERIALIZE_EVERY / max(0.1, effective_materialize_multiplier)))
 	if(process_cycle % materialize_every == 0)
 		process_virtual_materialization()
+		if(MC_TICK_CHECK)
+			return
 
 	if(process_cycle % FAUNA_PACK_PROCESS_EVERY == 0)
 		process_packs()
+		if(MC_TICK_CHECK)
+			return
 
 	if(world.time >= next_repro_tick)
 		process_reproduction()
 		next_repro_tick = world.time + FAUNA_REPRO_EVERY
+		if(MC_TICK_CHECK)
+			return
 
 	if(process_cycle % 100 == 0)
 		cleanup_stale_timers()
@@ -1700,7 +2065,7 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		var/zkey = z_state_key(z)
 		z_heat[zkey] = max(0, (z_heat[zkey] || 0) - FAUNA_HEAT_DECAY)
 
-	for(var/mob/living/carbon/human/H in world)
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
 		if(H.stat) continue
 		var/turf/T = get_turf(H)
 		if(!T) continue
@@ -1725,7 +2090,9 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		zone_player_pressure[zkey] = clamp((zone_player_pressure[zkey] || 0) + pressure_delta, FAUNA_ZONE_PRESSURE_MIN, FAUNA_ZONE_PRESSURE_MAX)
 
 /datum/controller/subsystem/fauna_ecosystem/proc/process_player_impact()
-	for(var/mob/living/carbon/human/H in world)
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
+		if(MC_TICK_CHECK)
+			return
 		if(QDELETED(H) || H.stat)
 			continue
 		var/turf/HT = get_turf(H)
@@ -1774,8 +2141,24 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 
 // ============== FAUNA BEHAVIOR PROCESSING ==============
 
-/datum/controller/subsystem/fauna_ecosystem/proc/process_fauna_behaviors()
-	for(var/mob/living/simple_animal/hostile/M in world)
+/datum/controller/subsystem/fauna_ecosystem/proc/process_fauna_behaviors(startup_scalar = 1)
+	if(world.time >= next_behavior_roster_rebuild || !length(fauna_behavior_roster))
+		rebuild_behavior_roster()
+	var/roster_len = length(fauna_behavior_roster)
+	if(roster_len <= 0)
+		return
+	var/scalar = clamp(startup_scalar, 0, 1)
+	var/behavior_budget = round(FAUNA_BEHAVIOR_STARTUP_MIN_BUDGET + ((FAUNA_BEHAVIOR_BASE_BUDGET - FAUNA_BEHAVIOR_STARTUP_MIN_BUDGET) * scalar))
+	behavior_budget = clamp(behavior_budget, 8, FAUNA_BEHAVIOR_BASE_BUDGET)
+	var/processed = 0
+	while(processed < behavior_budget)
+		if(MC_TICK_CHECK)
+			return
+		if(fauna_behavior_cursor > roster_len)
+			fauna_behavior_cursor = 1
+		var/mob/living/simple_animal/hostile/M = fauna_behavior_roster[fauna_behavior_cursor]
+		fauna_behavior_cursor++
+		processed++
 		if(QDELETED(M)) continue
 		if(M.stat) continue
 		if(!is_locally_active(M)) continue
@@ -3158,6 +3541,7 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 		text += "[s]:[state_counts[s]] "
 	text += "| packs=[length(packs)] scents=[length(scent_trails)] safe=[length(safe_spot)] dens=[length(home_quality)] nests=[length(nest_site)] gest=[length(gestation_until)]"
 	text += " | virtual_pop=[get_total_virtual_population()] markers=[length(GLOB.fauna_presets_by_turf)] marker_boot=[length(marker_bootstrap_until)]"
+	text += " | hybrid_nodes_z=[length(hybrid_nodes_by_z)] hybrid_routes=[length(hybrid_route_cache)]"
 	text += " | zones_hot=[hot_zones] ext_locks=[extinction_locks]"
 	text += " | tuning(v=[virtual_tick_multiplier] m=[materialize_multiplier] h=[hunting_impact_multiplier] c=[carrion_attract_multiplier])"
 	return text
@@ -3401,6 +3785,15 @@ SUBSYSTEM_DEF(fauna_ecosystem)
 			stale += key
 	for(var/key in stale)
 		home_season -= key
+
+	stale.Cut()
+	for(var/key in hybrid_route_cache)
+		var/mob/M = get_mob_from_key(key)
+		if(!M || QDELETED(M))
+			stale += key
+	for(var/key in stale)
+		hybrid_route_cache -= key
+		hybrid_route_goal -= key
 
 // ============== SPECIES DEFINITIONS ==============
 

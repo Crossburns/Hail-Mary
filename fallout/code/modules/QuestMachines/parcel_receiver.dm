@@ -1,8 +1,8 @@
 /obj/structure/f13/parcel_receiver_pad
 	name = "parcel receiver pad"
 	desc = "Place a sealed courier parcel here, then use the linked receiver terminal to send it."
-	icon = 'icons/obj/machines/teleporter.dmi'
-	icon_state = "tele-o"
+	icon = 'icons/structure/terminals.dmi'
+	icon_state = "Bounty_pad"
 	anchored = TRUE
 	density = FALSE
 	layer = LOW_OBJ_LAYER
@@ -26,8 +26,8 @@
 /obj/machinery/f13/parcel_receiver_terminal
 	name = "parcel receiver terminal"
 	desc = "Authenticates sealed courier parcels and credits the courier and local faction treasury."
-	icon = 'icons/fallout/machines/terminals.dmi'
-	icon_state = "Bounty_Console"
+	icon = 'icons/structure/terminals.dmi'
+	icon_state = "terminal_classic"
 	anchored = TRUE
 	density = TRUE
 	use_power = NO_POWER_USE

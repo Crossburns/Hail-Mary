@@ -6,8 +6,8 @@
 /obj/machinery/bounty_machine
 	name = "Wastland Bounty Machine"
 	desc = "This is Wastland Bounty Machine"
-	icon = 'icons/fallout/machines/terminals.dmi'
-	icon_state = "bounty"
+	icon = 'icons/structure/terminals.dmi'
+	icon_state = "terminal_classic"
 	anchored = 1
 	density = 1
 	verb_say = "beeps"

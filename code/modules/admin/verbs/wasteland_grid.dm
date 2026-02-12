@@ -144,3 +144,77 @@
 		else
 			for(var/line in report)
 				to_chat(mob, span_notice("[line]"))
+
+/client/proc/cmd_grid_faction_diagnostics()
+	set category = "Admin.Game"
+	set name = "Grid: Faction Diagnostics"
+
+	if(!check_rights(R_ADMIN))
+		return
+	if(!SSfaction_control)
+		if(mob)
+			to_chat(mob, span_warning("Faction control subsystem is unavailable."))
+		return
+
+	if(mob)
+		to_chat(mob, span_notice("=== Faction/Grid Diagnostics ==="))
+		var/owner_rows = 0
+		if(islist(SSfaction_control.district_owner) && length(SSfaction_control.district_owner))
+			for(var/district in SSfaction_control.district_owner)
+				owner_rows++
+				to_chat(mob, span_notice("owner: [district] -> [SSfaction_control.district_owner[district]]"))
+			to_chat(mob, span_notice("owner rows: [owner_rows]"))
+		else
+			to_chat(mob, span_warning("No district ownership rows recorded."))
+
+		var/list/node_report = SSfaction_control.audit_district_node_state()
+		to_chat(mob, span_notice("node rows: [length(node_report)]"))
+		var/printed = 0
+		for(var/line in node_report)
+			printed++
+			if(printed > 25)
+				to_chat(mob, span_notice("... additional node rows truncated ..."))
+				break
+			to_chat(mob, span_notice("[line]"))
+		to_chat(mob, span_notice("Static integrity counters (unknown map typepaths, missing assets): run tools/ci/roadmap_recovery_audit.py"))
+
+	log_admin("[key_name(src)] ran faction/grid diagnostics snapshot.")
+	message_admins(span_adminnotice("[key_name_admin(src)] ran faction/grid diagnostics snapshot."))
+
+/client/proc/cmd_grid_ops_snapshot()
+	set category = "Admin.Game"
+	set name = "Grid: Ops Snapshot"
+
+	if(!check_rights(R_ADMIN))
+		return
+	if(!SSfaction_control)
+		if(mob)
+			to_chat(mob, span_warning("Faction control subsystem is unavailable."))
+		return
+
+	var/list/snapshots = SSfaction_control.list_district_snapshots()
+	if(mob)
+		to_chat(mob, span_notice("=== Ops District Snapshot ==="))
+		if(!length(snapshots))
+			to_chat(mob, span_warning("No district snapshot rows available."))
+		else
+			var/printed = 0
+			for(var/list/row in snapshots)
+				printed++
+				if(printed > 30)
+					to_chat(mob, span_notice("... additional district rows truncated ..."))
+					break
+				var/d = row["district"]
+				var/o = row["owner"]
+				var/p = row["pressure"]
+				var/tier = row["pressure_tier"]
+				var/power_ok = row["power_ok"] ? "YES" : "NO"
+				var/water_ok = row["water_ok"] ? "YES" : "NO"
+				var/logistics_ok = row["logistics_ok"] ? "YES" : "NO"
+				to_chat(mob, span_notice("[d]: owner=[o ? o : "Unclaimed"] pressure=[p] ([tier]) utility=[power_ok]/[water_ok]/[logistics_ok]"))
+		var/list/task = SSfaction_control.get_recommended_task_for_mob(mob)
+		if(islist(task))
+			to_chat(mob, span_notice("Recommended task: [task["title"]] (district [task["district"]], priority [task["priority"]])"))
+
+	log_admin("[key_name(src)] ran ops district snapshot.")
+	message_admins(span_adminnotice("[key_name_admin(src)] ran ops district snapshot."))

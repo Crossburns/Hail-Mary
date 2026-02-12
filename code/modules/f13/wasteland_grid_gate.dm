@@ -41,3 +41,10 @@
 // Map compatibility alias for pre-existing placed machinery paths.
 /obj/machinery/f13_grid_gated/water_purifier
 	parent_type = /obj/machinery/f13/faction_water_purifier
+
+// Legacy mapped path compatibility.
+/obj/machinery/f13/grid_gate
+	parent_type = /obj/machinery/f13_grid_gated
+
+/obj/machinery/f13/grid_gate/water_purifier
+	parent_type = /obj/machinery/f13_grid_gated/water_purifier

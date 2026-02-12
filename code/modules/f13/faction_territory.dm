@@ -657,7 +657,8 @@
 	parent_type = /obj/machinery/f13/faction_locked
 	name = "faction command console"
 	desc = "Command console for district economy and control operations."
-	icon_state = "control_on"
+	icon = 'icons/structure/terminals.dmi'
+	icon_state = "terminal_vault"
 	require_district_owner = FALSE
 	allowed_factions = list(FACTION_BROTHERHOOD, FACTION_NCR, FACTION_LEGION, FACTION_EASTWOOD, FACTION_MASS_FUSION)
 

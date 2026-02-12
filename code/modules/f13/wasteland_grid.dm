@@ -5037,7 +5037,7 @@ SUBSYSTEM_DEF(wasteland_grid)
 /obj/machinery/f13/grid_faction_district_console
 	name = "district dispatch console"
 	desc = "Reactor-side console for routing BOS, NCR, Legion, Town, and Mass Fusion district power."
-	icon = 'code/modules/f13/terminals.dmi'
+	icon = 'icons/structure/terminals.dmi'
 	icon_state = "terminal_vault"
 	density = TRUE
 	use_power = NO_POWER_USE

@@ -29446,10 +29446,6 @@
 	icon_state = "darkrustysolid"
 	},
 /area/f13/building/massfusion)
-"xZz" = (
-/obj/effect/spawner/lootdrop/f13/armor/tier4,
-/turf/open/indestructible/ground/inside/mountain,
-/area/f13/caves)
 "yau" = (
 /obj/structure/handrail/g_central{
 	dir = 1;
@@ -38680,11 +38676,11 @@ xwF
 xwF
 xwF
 xwF
-xwF
-xwF
-xwF
-xwF
-xwF
+aaa
+aaa
+aaa
+aaa
+aaa
 xwF
 aae
 aak
@@ -38937,12 +38933,12 @@ xwF
 xwF
 xwF
 xwF
-xwF
+aaa
 xwF
 xwF
 ybG
-xwF
-xwF
+aaa
+aaa
 aae
 aae
 aae
@@ -39193,13 +39189,13 @@ xwF
 xwF
 xwF
 xwF
-xwF
-xwF
+aaa
+aaa
 ybG
 ybG
 tOU
 ybG
-xwF
+aaa
 aae
 aae
 aae
@@ -39447,16 +39443,16 @@ aak
 aak
 xwF
 xwF
-xwF
-xwF
-xwF
-xwF
+aaa
+aaa
+aaa
+aaa
 ybG
 ybG
 jdj
 tHd
 ybG
-xwF
+aaa
 aae
 aae
 aae
@@ -39703,8 +39699,8 @@ aaB
 aak
 aak
 xwF
-xwF
-xwF
+aaa
+aaa
 sRY
 ybG
 tVk
@@ -39713,7 +39709,7 @@ jYr
 bEy
 nuL
 ybG
-xwF
+aaa
 aae
 aae
 aae
@@ -39960,7 +39956,7 @@ aaB
 aaB
 aak
 xwF
-xwF
+aaa
 kym
 lAy
 ybG
@@ -39970,7 +39966,7 @@ tFw
 ybG
 ybG
 ybG
-xwF
+aaa
 aae
 aae
 aae
@@ -40217,7 +40213,7 @@ aaB
 aaB
 aak
 xwF
-xwF
+aaa
 kym
 lAy
 soV
@@ -40227,7 +40223,7 @@ tFw
 ybG
 uqk
 tOU
-xwF
+aaa
 aae
 aae
 aae
@@ -40474,7 +40470,7 @@ aak
 qoq
 aak
 xwF
-xwF
+aaa
 kym
 xQV
 ybG
@@ -40484,7 +40480,7 @@ tFw
 ybG
 tOU
 ybG
-xwF
+aaa
 aae
 aae
 aae
@@ -40731,7 +40727,7 @@ aak
 aaB
 aak
 xwF
-xwF
+aaa
 kym
 qpP
 kym
@@ -40741,7 +40737,7 @@ lOi
 tOU
 tVk
 mFf
-xwF
+aaa
 aae
 aae
 aae
@@ -40988,7 +40984,7 @@ aak
 aaB
 aak
 xwF
-xwF
+aaa
 kym
 kym
 kym
@@ -40998,7 +40994,7 @@ kym
 lAy
 iiq
 ybG
-xwF
+aaa
 aae
 aak
 aak
@@ -41245,9 +41241,9 @@ aak
 aaB
 aak
 xwF
-xwF
-xwF
-xwF
+aaa
+aaa
+aaa
 ibd
 hLe
 hLe
@@ -41255,7 +41251,7 @@ kym
 lAy
 ybG
 tOU
-xwF
+aaa
 aae
 aak
 aak
@@ -41504,7 +41500,7 @@ aak
 xwF
 xwF
 xwF
-xwF
+aaa
 ibd
 hLe
 hLe
@@ -41512,7 +41508,7 @@ ibd
 ybG
 ybG
 tOU
-xwF
+aaa
 aae
 aae
 aae
@@ -41761,15 +41757,15 @@ xwF
 xwF
 xwF
 xwF
-xwF
+aaa
 ibd
 hLe
 hLe
 ibd
 ybG
 ybG
-xwF
-xwF
+aaa
+aaa
 aae
 aae
 aae
@@ -42018,14 +42014,14 @@ xMJ
 xwF
 xwF
 xwF
-xwF
+aaa
 ibd
 hLe
 hLe
 ibd
-xwF
-xwF
-xwF
+aaa
+aaa
+aaa
 xwF
 aae
 aae
@@ -42275,7 +42271,7 @@ aak
 xwF
 xwF
 xwF
-xwF
+aaa
 ibd
 hLe
 hLe
@@ -42532,7 +42528,7 @@ aaB
 xwF
 xwF
 xwF
-xwF
+aaa
 ibd
 rVt
 iAY
@@ -42789,7 +42785,7 @@ aaB
 aak
 aak
 aak
-aaB
+aaa
 uxF
 yfS
 hLe
@@ -43045,8 +43041,8 @@ aaB
 aaB
 aak
 aak
-rQU
-aaB
+aak
+aaa
 ibd
 hLe
 rVt
@@ -43302,8 +43298,8 @@ qkR
 ssu
 aak
 aak
-aaB
-hlw
+aak
+aaa
 ibd
 iAY
 hLe
@@ -43559,8 +43555,8 @@ aaB
 aak
 aak
 aak
-vqW
-xZz
+aak
+aaa
 ibd
 rVt
 oVd
@@ -43817,7 +43813,7 @@ ssu
 aak
 aak
 aak
-aaB
+aaa
 juG
 hLe
 oVd
@@ -44074,7 +44070,7 @@ aaB
 aak
 aak
 aak
-aaB
+aaa
 uxF
 oVd
 oVd
@@ -44331,10 +44327,10 @@ xGL
 aak
 aak
 aak
-aak
-bIg
-aak
-aak
+aaa
+aaa
+aaa
+aaa
 aaa
 aae
 aae
@@ -44589,7 +44585,7 @@ aak
 aak
 aak
 aak
-aaB
+aak
 aak
 aak
 aaa
@@ -44846,8 +44842,8 @@ aak
 aak
 aak
 aak
-aaB
-aaB
+aak
+aak
 aak
 aaa
 aae
@@ -45104,7 +45100,7 @@ aak
 aak
 aak
 aak
-aaB
+aak
 aak
 aaa
 aae
@@ -95235,4 +95231,3 @@ aaa
 aaa
 aaa
 "}
-

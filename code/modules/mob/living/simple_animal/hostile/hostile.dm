@@ -109,6 +109,30 @@
 	var/despawns_when_lonely = TRUE
 	/// timer for despawning when lonely
 	var/lonely_timer_id
+	/// Brief memory of where the current target was last seen.
+	var/turf/last_seen_target_turf
+	/// World time until we stop pursuing last seen location.
+	var/last_seen_target_until = 0
+	/// How long to remember last seen target location (deciseconds).
+	var/last_seen_memory_time = 30
+	/// Minimum time to stay committed to a selected target (deciseconds).
+	var/intent_lock_time = 12
+	/// World time until retargeting is allowed unless current target is invalid.
+	var/intent_lock_until = 0
+	/// Delay between full target selection passes (deciseconds).
+	var/target_decision_delay = 5
+	/// World time when next full target selection pass is allowed.
+	var/next_target_decision_at = 0
+	/// Last turf where we made progress while approaching a target.
+	var/turf/stuck_last_turf
+	/// Consecutive approach ticks with no movement.
+	var/stuck_ticks = 0
+	/// Ticks before running stuck recovery.
+	var/stuck_tick_threshold = 5
+	/// World time throttle for stuck recovery attempts.
+	var/next_stuck_recovery_at = 0
+	/// Delay between stuck recovery attempts (deciseconds).
+	var/stuck_recovery_delay = 12
 
 /mob/living/simple_animal/hostile/Initialize()
 	. = ..()
@@ -162,7 +186,10 @@
 	if(search_objects_timer_id)
 		deltimer(search_objects_timer_id)
 		search_objects_timer_id = null
-	
+
+	last_seen_target_turf = null
+	stuck_last_turf = null
+
 	// Unqueue from idle NPC pool
 	SSidlenpcpool.remove_from_culling(src)
 	
@@ -344,6 +371,12 @@
 			. += A
 
 /mob/living/simple_animal/hostile/proc/FindTarget(list/possible_targets, HasTargetsList = 0)//Step 2, filter down possible targets to things we actually care about
+	if(target && CanAttack(target))
+		if(world.time < intent_lock_until)
+			return target
+	if(world.time < next_target_decision_at)
+		return target
+
 	. = list()
 	if (peaceful == FALSE)
 		if(!HasTargetsList)
@@ -359,6 +392,7 @@
 		var/Target = PickTarget(.)
 		GiveTarget(Target)
 		COOLDOWN_START(src, sight_shoot_delay, sight_shoot_delay_time)
+		next_target_decision_at = world.time + target_decision_delay
 		return Target //We now have a target
 
 
@@ -462,9 +496,17 @@
 	add_target(new_target)
 	LosePatience()
 	if(target != null)
+		intent_lock_until = world.time + intent_lock_time
+		var/turf/current_target_turf = get_turf(target)
+		if(current_target_turf)
+			last_seen_target_turf = current_target_turf
+			last_seen_target_until = world.time + last_seen_memory_time
 		GainPatience()
 		Aggro()
 		return 1
+	intent_lock_until = 0
+	last_seen_target_turf = null
+	last_seen_target_until = 0
 
 //What we do after closing in
 /mob/living/simple_animal/hostile/proc/MeleeAction(patience = TRUE)
@@ -496,6 +538,10 @@
 			LoseTarget()
 			return 0
 		var/target_distance = get_dist(targets_from,target)
+		var/turf/current_target_turf = get_turf(target)
+		if(current_target_turf)
+			last_seen_target_turf = current_target_turf
+			last_seen_target_until = world.time + last_seen_memory_time
 		if(ranged) //We ranged? Shoot at em
 			if(!target.Adjacent(targets_from) && ranged_cooldown <= world.time) //But make sure they're not in range for a melee attack and our range attack is off cooldown
 				OpenFire(target)
@@ -525,6 +571,14 @@
 				in_melee = FALSE //If we're just preparing to strike do not enter sidestep mode
 			return 1
 		return 0
+	if(last_seen_target_turf && world.time <= last_seen_target_until && last_seen_target_turf.z == z)
+		if(get_turf(src) == last_seen_target_turf)
+			last_seen_target_turf = null
+			last_seen_target_until = 0
+			LoseTarget()
+			return 0
+		Goto(last_seen_target_turf, move_to_delay, 0)
+		return 1
 	if(environment_smash)
 		if(target.loc != null && get_dist(targets_from, target.loc) <= vision_range) //We can't see our target, but he's in our vision range still
 			if(ranged_ignores_vision && ranged_cooldown <= world.time) //we can't see our target... but we can fire at them!
@@ -544,6 +598,23 @@
 		approaching_target = TRUE
 	else
 		approaching_target = FALSE
+
+	if(approaching_target)
+		var/turf/current_turf = get_turf(src)
+		if(current_turf == stuck_last_turf)
+			stuck_ticks++
+		else
+			stuck_ticks = 0
+			stuck_last_turf = current_turf
+		if(stuck_ticks >= stuck_tick_threshold && world.time >= next_stuck_recovery_at)
+			next_stuck_recovery_at = world.time + stuck_recovery_delay
+			stuck_ticks = 0
+			DestroyPathToTarget()
+			step(src, pick(GLOB.cardinals))
+	else
+		stuck_ticks = 0
+		stuck_last_turf = get_turf(src)
+
 	if(CHECK_BITFIELD(mobility_flags, MOBILITY_MOVE))
 		set_glide_size(DELAY_TO_GLIDE_SIZE(move_to_delay))
 		walk_to(src, target, minimum_distance, delay)
@@ -597,6 +668,8 @@
 	GiveTarget(null)
 	approaching_target = FALSE
 	in_melee = FALSE
+	stuck_ticks = 0
+	stuck_last_turf = get_turf(src)
 	walk(src, 0)
 	LoseAggro()
 

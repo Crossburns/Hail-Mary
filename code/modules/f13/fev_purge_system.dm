@@ -21,6 +21,11 @@
 // Target trait: if your wasteland z-levels aren't ZTRAIT_STATION, the base weather system may not pick them.
 // This file includes a runtime fallback to still hit area_types even if impacted_z_levels comes up empty.
 #define FEV_TARGET_TRAIT ZTRAIT_STATION
+#define FEV_ABOMINATION_SPAWN_DELAY 3 SECONDS
+#define FEV_ABOMINATION_MIN 2
+#define FEV_ABOMINATION_MAX 6
+#define FEV_ABOMINATION_BASELINE 2
+#define FEV_ABOMINATION_REINFORCE_INTERVAL 12 SECONDS
 
 
 // =============================================================================
@@ -142,6 +147,19 @@
 	/// Cache original area visuals so we never permanently trash custom areas
 	var/list/area_visual_cache = list() // area -> list(icon=..., icon_state=..., layer=..., alpha=..., color=..., opacity=...)
 
+	/// Runtime FEV miasma field (kudzu-like spread, non-blocking visual only)
+	var/list/obj/effect/fev_miasma/miasma_tiles = list()
+	var/list/obj/effect/fev_miasma/miasma_frontier = list()
+	var/miasma_max_tiles = 65025
+	var/miasma_seeds_per_area = 8
+	// 10x faster spread than prior tuning.
+	var/miasma_spread_steps = 2200
+	var/miasma_exposure_intensity = 2.5
+
+	/// Player-controlled monsters that can emerge during the storm.
+	var/list/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/storm_abominations = list()
+	var/next_abomination_reinforce_at = 0
+
 /datum/weather/fev_storm/New()
 	..()
 	sound_wind = new
@@ -253,7 +271,12 @@
 	// Prefer impacted_z_levels if it exists, otherwise fall back to impacted_areas (manual)
 	if(impacted_z_levels && impacted_z_levels.len && SSmapping && SSmapping.areas_in_z)
 		for(var/z in impacted_z_levels)
-			eligible_areas += SSmapping.areas_in_z[z]
+			if(isnum(z))
+				var/znum = round(z)
+				if(znum >= 1 && znum <= SSmapping.areas_in_z.len)
+					var/list/areas_for_z = SSmapping.areas_in_z[znum]
+					if(islist(areas_for_z) && areas_for_z.len)
+						eligible_areas += areas_for_z
 	else
 		eligible_areas = impacted_areas ? impacted_areas.Copy() : list()
 
@@ -285,6 +308,9 @@
 	sound_music.start()
 	sound_rain_outside.start()
 	sound_rain_inside.start()
+	start_miasma()
+	next_abomination_reinforce_at = world.time + FEV_ABOMINATION_REINFORCE_INTERVAL
+	addtimer(CALLBACK(src, PROC_REF(spawn_abominations)), FEV_ABOMINATION_SPAWN_DELAY)
 
 /datum/weather/fev_storm/wind_down()
 	. = ..()
@@ -301,6 +327,9 @@
 
 	// Restore any area visuals we altered (single source of truth: end() only)
 	restore_all_area_visuals()
+	clear_miasma()
+	clear_abominations()
+	next_abomination_reinforce_at = 0
 
 	// If this was the first storm, schedule recurring storms
 	if(is_first_storm)
@@ -312,6 +341,116 @@
 	if(recurring_timer_id)
 		deltimer(recurring_timer_id)
 	recurring_timer_id = addtimer(CALLBACK(GLOBAL_PROC, /proc/trigger_recurring_fev_storm), FEV_RECURRING_INTERVAL, TIMER_STOPPABLE)
+
+/datum/weather/fev_storm/proc/desired_abomination_count()
+	var/living_count = max(1, living_player_count())
+	return clamp(round(living_count / 25) + FEV_ABOMINATION_BASELINE, FEV_ABOMINATION_MIN, FEV_ABOMINATION_MAX)
+
+/datum/weather/fev_storm/proc/get_abomination_spawn_pool()
+	var/static/list/spawn_pool = list(
+		/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/juggernaut = 4,
+		/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/mauler = 3,
+		/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/stalker = 2
+	)
+	return spawn_pool
+
+/datum/weather/fev_storm/proc/can_spawn_abomination_at(turf/T)
+	if(!T || QDELETED(T))
+		return FALSE
+	if(isspaceturf(T) || T.density)
+		return FALSE
+	var/area/A = get_area(T)
+	if(!is_allowed_area(A) || !A.outdoors)
+		return FALSE
+	for(var/obj/O in T)
+		if(O.density)
+			return FALSE
+	return TRUE
+
+/datum/weather/fev_storm/proc/find_abomination_spawn_turf()
+	if(miasma_frontier && miasma_frontier.len)
+		for(var/i in 1 to 64)
+			var/obj/effect/fev_miasma/M = pick(miasma_frontier)
+			if(!M || QDELETED(M))
+				continue
+			var/turf/T = get_turf(M)
+			if(can_spawn_abomination_at(T))
+				return T
+			CHECK_TICK
+
+	if(!impacted_areas || !impacted_areas.len)
+		return null
+
+	for(var/i in 1 to 32)
+		var/area/A = pick(impacted_areas)
+		if(!A || QDELETED(A))
+			continue
+		var/list/turfs = get_area_turfs(A)
+		if(!islist(turfs) || !turfs.len)
+			continue
+		var/turf/T = pick(turfs)
+		if(can_spawn_abomination_at(T))
+			return T
+		CHECK_TICK
+
+	return null
+
+/datum/weather/fev_storm/proc/spawn_abominations()
+	if(stage != MAIN_STAGE)
+		return
+
+	ensure_impacts()
+	if(!storm_abominations)
+		storm_abominations = list()
+
+	for(var/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/A as anything in storm_abominations)
+		if(!A || QDELETED(A))
+			storm_abominations -= A
+
+	var/target_count = desired_abomination_count()
+	var/list/spawn_pool = get_abomination_spawn_pool()
+	var/spawned = 0
+
+	for(var/i in 1 to target_count)
+		var/turf/spawn_turf = find_abomination_spawn_turf()
+		if(!spawn_turf)
+			break
+
+		var/abomination_type = pickweight(spawn_pool)
+		if(!ispath(abomination_type, /mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination))
+			continue
+
+		var/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/new_abomination = new abomination_type(spawn_turf)
+		if(!new_abomination)
+			continue
+
+		new_abomination.master_storm = src
+		storm_abominations += new_abomination
+		spawned++
+		CHECK_TICK
+
+	if(spawned)
+		notify_ghosts(
+			"FEV abominations are emerging from the storm.",
+			'sound/effects/blobattack.ogg',
+			source = storm_abominations[1],
+			action = NOTIFY_ATTACK,
+			flashwindow = FALSE,
+			ignore_dnr_observers = TRUE
+		)
+
+/datum/weather/fev_storm/proc/clear_abominations()
+	if(!storm_abominations || !storm_abominations.len)
+		return
+
+	for(var/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/A as anything in storm_abominations)
+		if(!A || QDELETED(A))
+			continue
+		if(A.client)
+			to_chat(A, span_warning("Without the storm, your FEV abomination body collapses."))
+		qdel(A)
+
+	storm_abominations.Cut()
 
 /// Global proc to trigger recurring FEV storms
 /proc/trigger_recurring_fev_storm()
@@ -411,21 +550,134 @@
 // =============================================================================
 
 /datum/weather/fev_storm/weather_act(mob/living/L)
-	if(is_fev_protected(L))
+	apply_fev_exposure(L, 1)
+
+/datum/weather/fev_storm/process()
+	. = ..()
+	if(stage == MAIN_STAGE)
+		process_miasma()
+		if(world.time >= next_abomination_reinforce_at)
+			spawn_abominations()
+			next_abomination_reinforce_at = world.time + FEV_ABOMINATION_REINFORCE_INTERVAL
+
+/datum/weather/fev_storm/proc/apply_fev_exposure(mob/living/L, intensity = 1)
+	if(!L || is_fev_protected(L))
 		return
 
-	L.adjustToxLoss(3)
-	L.adjust_bodytemperature(rand(5, 15))
+	L.adjustToxLoss(max(1, round(3 * intensity, 0.1)))
+	L.adjust_bodytemperature(max(1, rand(5, 15) * intensity))
 
 	if(ishuman(L))
 		var/mob/living/carbon/human/H = L
-		H.apply_effect(10, EFFECT_IRRADIATE)
+		H.apply_effect(max(1, round(10 * intensity, 1)), EFFECT_IRRADIATE)
 
-	if(prob(5))
+	if(iscarbon(L))
+		var/mob/living/carbon/C = L
+		if(C.reagents)
+			C.reagents.add_reagent(/datum/reagent/toxin/FEV_solution/one, max(0.2, 0.6 * intensity))
+
+	if(prob(max(1, round(5 * intensity, 1))))
 		L.hallucination += rand(10, 30)
 
-	if(prob(10))
+	if(prob(max(1, round(10 * intensity, 1))))
 		to_chat(L, span_danger("The green mist burns your skin! You feel your cells... shifting."))
+
+/datum/weather/fev_storm/proc/start_miasma()
+	clear_miasma()
+	ensure_impacts()
+	var/seeded_tiles = 0
+	for(var/area/A as anything in impacted_areas)
+		if(!A || QDELETED(A))
+			continue
+		var/list/turfs = get_area_turfs(A)
+		if(!islist(turfs) || !turfs.len)
+			continue
+		var/seed_count = min(miasma_seeds_per_area, turfs.len)
+		for(var/i in 1 to seed_count)
+			if(spawn_miasma_tile(pick(turfs)))
+				seeded_tiles++
+		CHECK_TICK
+
+	// Always seed around active living mobs in allowed areas so players see immediate miasma.
+	for(var/mob/living/L in GLOB.mob_living_list)
+		var/area/A = get_area(L)
+		if(!is_allowed_area(A))
+			continue
+		var/turf/T = get_turf(L)
+		if(!T)
+			continue
+		if(spawn_miasma_tile(T))
+			seeded_tiles++
+		for(var/d in GLOB.cardinals)
+			if(spawn_miasma_tile(get_step(T, d)))
+				seeded_tiles++
+		if(seeded_tiles >= 256)
+			break
+		CHECK_TICK
+
+/datum/weather/fev_storm/proc/clear_miasma()
+	if(miasma_tiles && miasma_tiles.len)
+		QDEL_LIST(miasma_tiles)
+	if(miasma_frontier)
+		miasma_frontier.Cut()
+
+/datum/weather/fev_storm/proc/can_spread_miasma_to(turf/T)
+	if(!T || isspaceturf(T))
+		return FALSE
+	if(T.density)
+		return FALSE
+	if(locate(/obj/effect/fev_miasma) in T)
+		return FALSE
+	return TRUE
+
+/datum/weather/fev_storm/proc/spawn_miasma_tile(turf/T)
+	if(!can_spread_miasma_to(T))
+		return FALSE
+	var/obj/effect/fev_miasma/M = new(T)
+	M.master_storm = src
+	miasma_tiles += M
+	miasma_frontier += M
+	return TRUE
+
+/datum/weather/fev_storm/proc/process_miasma()
+	if(!miasma_tiles || !miasma_tiles.len)
+		return
+
+	var/spread_budget = miasma_spread_steps
+	while(spread_budget-- > 0)
+		if(miasma_tiles.len >= miasma_max_tiles)
+			break
+		if(!miasma_frontier || !miasma_frontier.len)
+			break
+
+		var/obj/effect/fev_miasma/source = pick(miasma_frontier)
+		if(!source || QDELETED(source))
+			miasma_frontier -= source
+			continue
+
+		var/turf/source_turf = get_turf(source)
+		if(!source_turf)
+			miasma_frontier -= source
+			continue
+
+		var/spread_success = FALSE
+		for(var/d in GLOB.cardinals)
+			var/turf/next_turf = get_step(source_turf, d)
+			if(spawn_miasma_tile(next_turf))
+				spread_success = TRUE
+				break
+
+		if(!spread_success && prob(30))
+			miasma_frontier -= source
+
+	// Fast registration: apply directly to every living mob currently standing in miasma.
+	for(var/mob/living/L in GLOB.mob_living_list)
+		var/turf/T = get_turf(L)
+		if(!T)
+			continue
+		if(locate(/obj/effect/fev_miasma) in T)
+			apply_fev_exposure(L, miasma_exposure_intensity)
+		CHECK_TICK
 
 /// Check if a mob is protected from FEV exposure
 /proc/is_fev_protected(mob/living/L)
@@ -445,6 +697,8 @@
 
 		if(istype(S, /obj/item/clothing/suit/armor/power_armor))
 			return TRUE
+		if(istype(S, /obj/item/clothing/suit/space/hardsuit/ms13/power_armor))
+			return TRUE
 		if(istype(S, /obj/item/clothing/suit/bio_suit))
 			return TRUE
 		if(istype(S, /obj/item/clothing/suit/radiation))
@@ -461,6 +715,129 @@
 		return TRUE
 
 	return FALSE
+
+/obj/effect/fev_miasma
+	name = "fev miasma"
+	desc = "A thick, mutagenic haze."
+	icon = FEV_FOG_DMI
+	icon_state = FEV_FOG_MAIN_STATE
+	anchored = TRUE
+	density = FALSE
+	opacity = FALSE
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
+	alpha = 170
+	layer = TURF_LAYER + 0.2
+
+	var/datum/weather/fev_storm/master_storm = null
+
+/obj/effect/fev_miasma/Initialize(mapload)
+	. = ..()
+	if(icon_state_exists(FEV_FOG_DMI, FEV_FOG_MAIN_STATE))
+		icon = FEV_FOG_DMI
+		icon_state = FEV_FOG_MAIN_STATE
+	else
+		icon = 'icons/effects/weather_effects.dmi'
+		icon_state = "acid_rain"
+	color = "#7dff7d"
+	set_light(1, 0.5, "#3ee26a")
+
+/obj/effect/fev_miasma/Crossed(atom/movable/AM)
+	. = ..()
+	if(!master_storm || !isliving(AM))
+		return
+	var/mob/living/L = AM
+	master_storm.apply_fev_exposure(L, master_storm.miasma_exposure_intensity)
+
+/obj/effect/fev_miasma/Destroy()
+	if(master_storm)
+		master_storm.miasma_tiles -= src
+		master_storm.miasma_frontier -= src
+		master_storm = null
+	return ..()
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination
+	name = "FEV abomination"
+	desc = "A storm-forged mutagenic horror."
+	faction = list("fev_abomination")
+	can_ghost_into = TRUE
+	pop_required_to_jump_into = 0
+	health = 260
+	maxHealth = 260
+	melee_damage_lower = 18
+	melee_damage_upper = 24
+	obj_damage = 70
+	move_to_delay = 4
+	speed = 1
+	color = "#6eff7d"
+	gold_core_spawnable = NO_SPAWN
+	var/datum/weather/fev_storm/master_storm = null
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/Initialize()
+	. = ..()
+	robust_searching = TRUE
+	wander = FALSE
+	vision_range = 127
+	aggro_vision_range = 127
+	minimum_distance = 1
+	if(!("fev" in weather_immunities))
+		weather_immunities += "fev"
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/ListTargets()
+	var/list/targets = list()
+	for(var/mob/living/L in GLOB.player_list)
+		if(!L || QDELETED(L))
+			continue
+		if(L == src || L.stat == DEAD)
+			continue
+		if(L.z != z)
+			continue
+		targets += L
+	return targets
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/AttackingTarget()
+	. = ..()
+	if(. && iscarbon(target))
+		var/mob/living/carbon/C = target
+		if(C.reagents)
+			C.reagents.add_reagent(/datum/reagent/toxin/FEV_solution/one, 1.2)
+		C.adjustToxLoss(2)
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/Destroy()
+	if(master_storm)
+		master_storm.storm_abominations -= src
+		master_storm = null
+	return ..()
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/juggernaut
+	name = "FEV Abomination Juggernaut"
+	desc = "A massively overgrown abomination that shrugs off punishment."
+	health = 420
+	maxHealth = 420
+	melee_damage_lower = 26
+	melee_damage_upper = 32
+	move_to_delay = 6
+	color = "#4de66e"
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/mauler
+	name = "FEV Abomination Mauler"
+	desc = "A violently unstable abomination built for close-quarters slaughter."
+	health = 300
+	maxHealth = 300
+	melee_damage_lower = 22
+	melee_damage_upper = 28
+	move_to_delay = 4
+	color = "#66ff66"
+
+/mob/living/simple_animal/hostile/blob/blobbernaut/independent/f13_fev_abomination/stalker
+	name = "FEV Abomination Stalker"
+	desc = "A lean abomination that darts through the fog to ambush prey."
+	health = 210
+	maxHealth = 210
+	melee_damage_lower = 16
+	melee_damage_upper = 22
+	move_to_delay = 2
+	alpha = 210
+	color = "#a3ffb0"
 
 
 // =============================================================================

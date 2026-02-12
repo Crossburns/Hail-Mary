@@ -188,10 +188,6 @@
 	icon_state = "outerturn"
 	},
 /area/f13/wasteland)
-"aaO" = (
-/obj/effect/decal/cleanable/dirt,
-/obj/structure/f13/invisible_blocker,
-/area/f13/radiation)
 "aaP" = (
 /obj/machinery/light{
 	dir = 8
@@ -215,6 +211,7 @@
 /obj/item/clothing/under/f13/atombeliever,
 /obj/item/clothing/suit/armor/atomzealot,
 /obj/item/clothing/suit/armor/atomwitch,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aaS" = (
 /obj/effect/spawner/lootdrop/f13/junkspawners,
@@ -235,6 +232,7 @@
 /obj/structure/grid/backup_generator{
 	pixel_y = 0
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aaY" = (
 /mob/living/simple_animal/hostile/radscorpion,
@@ -285,7 +283,8 @@
 	pixel_y = -8
 	},
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "abn" = (
 /obj/effect/decal/cleanable/dirt{
 	color = "#363636"
@@ -324,9 +323,6 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/closed/wall/f13/wood,
 /area/f13/building)
-"aby" = (
-/turf/closed/wall/mojave/concrete,
-/area/f13/radiation)
 "abB" = (
 /obj/effect/landmark/start/f13/auxilia,
 /turf/open/indestructible/ground/outside/gravel,
@@ -350,6 +346,7 @@
 	pixel_y = 6
 	},
 /obj/structure/table/reinforced,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "abI" = (
 /obj/item/flag/bos,
@@ -365,6 +362,7 @@
 "abM" = (
 /obj/structure/closet,
 /obj/item/clothing/gloves/color/black,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "abN" = (
 /obj/structure/sink{
@@ -543,6 +541,7 @@
 	dir = 4
 	},
 /obj/effect/spawner/lootdrop/f13/weapon/gun/energy/low,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "acI" = (
 /obj/structure/fluff/rails{
@@ -588,7 +587,8 @@
 "acQ" = (
 /obj/structure/fence/door/opened,
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "acR" = (
 /obj/effect/decal/cleanable/dirt/dust,
 /turf/open/floor/f13{
@@ -603,6 +603,7 @@
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/grid/purge_valve,
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "acV" = (
 /turf/open/floor/f13/wood,
@@ -692,7 +693,8 @@
 "adm" = (
 /obj/machinery/grid/pump,
 /obj/structure/f13/invisible_blocker,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "ads" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/bed,
@@ -705,21 +707,21 @@
 /obj/machinery/light/small{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "adu" = (
 /obj/structure/stairs{
 	dir = 4
 	},
-/turf/open/floor/plasteel/f13{
-	icon_state = "darkrusty"
-	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "adv" = (
 /obj/effect/spawner/lootdrop/f13/advcrafting,
 /turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building)
 "adw" = (
 /obj/structure/reagent_dispensers/fueltank,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ady" = (
 /obj/structure/barricade/wooden/strong,
@@ -758,8 +760,8 @@
 /area/f13/tunnel/northwest)
 "adG" = (
 /obj/structure/decoration/rads,
-/turf/closed/wall/mineral/concrete,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "adH" = (
 /obj/effect/decal/marking{
 	icon_state = "doubleverticaldegraded"
@@ -852,6 +854,7 @@
 "aei" = (
 /obj/structure/closet,
 /obj/effect/decal/cleanable/generic,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aem" = (
 /obj/effect/decal/cleanable/dirt/dust,
@@ -961,6 +964,7 @@
 /obj/effect/spawner/lootdrop/f13/weapon/gun/ammo/tier2,
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aeQ" = (
 /obj/effect/spawner/lootdrop/f13/weapon/gun/ballistic/low,
@@ -1010,7 +1014,8 @@
 	dir = 4
 	},
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "aff" = (
 /obj/structure/barricade/wooden,
 /obj/structure/decoration/rag,
@@ -1058,7 +1063,8 @@
 	pixel_y = -9
 	},
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "afn" = (
 /obj/structure/barricade/wooden,
 /turf/closed/wall/f13/wood,
@@ -1078,7 +1084,8 @@
 /area/f13/wasteland)
 "afr" = (
 /obj/structure/fence/door,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "afs" = (
 /obj/effect/decal/marking{
 	icon_state = "doubleverticaldegraded"
@@ -1136,12 +1143,14 @@
 "afG" = (
 /obj/item/weldingtool,
 /obj/structure/table/reinforced,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "afH" = (
 /obj/structure/railing{
 	dir = 5
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "afI" = (
 /obj/effect/decal/cleanable/dirt{
 	color = "#363636"
@@ -1178,7 +1187,8 @@
 /obj/effect/decal/cleanable/dirt,
 /obj/item/stack/sheet/mineral/uranium,
 /obj/effect/decal/cleanable/greenglow,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "afS" = (
 /turf/open/floor/f13{
 	icon_state = "floorrusty"
@@ -1219,6 +1229,7 @@
 	pixel_y = -4
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "age" = (
 /obj/effect/turf_decal/weather/dirt{
@@ -1276,6 +1287,7 @@
 	dir = 8
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "agD" = (
 /obj/machinery/light{
@@ -1289,6 +1301,7 @@
 /obj/structure/grid/filter_unit{
 	component_tag = filter_1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "agH" = (
 /obj/effect/decal/marking{
@@ -1329,8 +1342,8 @@
 /obj/structure/table/f13/mojave/low_wall/concrete,
 /obj/structure/window/reinforced/fulltile/mojave,
 /obj/structure/f13/mojave_prop/structure_windows_frames__concrete,
-/turf/open/floor/plasteel/f13/vault_floor/dark,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "agT" = (
 /obj/effect/decal/cleanable/dirt{
 	color = "#363636"
@@ -1618,7 +1631,8 @@
 /obj/structure/fence{
 	dir = 4
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "ail" = (
 /obj/structure/simple_door/metal/store,
 /turf/open/floor/f13{
@@ -2694,6 +2708,7 @@
 	dir = 4;
 	pixel_x = 3
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ams" = (
 /obj/machinery/light/small/broken{
@@ -2922,6 +2937,7 @@
 	name = "power unit"
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "anq" = (
 /obj/effect/decal/cleanable/dirt/dust,
@@ -3119,6 +3135,7 @@
 	light_color = "#e8eaff"
 	},
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aog" = (
 /obj/effect/decal/cleanable/dirt,
@@ -3131,6 +3148,7 @@
 	dir = 8
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aoi" = (
 /obj/structure/table,
@@ -5083,6 +5101,7 @@
 	pixel_y = 8
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "awj" = (
 /obj/structure/car/rubbish2,
@@ -5388,6 +5407,7 @@
 	},
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "axt" = (
 /turf/open/indestructible/ground/outside/sidewalk{
@@ -5963,6 +5983,7 @@
 /obj/structure/chair/office{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "azK" = (
 /obj/effect/decal/remains/human,
@@ -7435,6 +7456,7 @@
 "aEq" = (
 /obj/effect/decal/cleanable/generic,
 /obj/machinery/f13/faction_capture_node,
+/turf/template_noop,
 /area/f13/building/massfusion)
 "aEr" = (
 /obj/structure/flora/grass/coyote/twelve,
@@ -7826,6 +7848,7 @@
 /obj/machinery/light{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aFF" = (
 /obj/structure/chair{
@@ -8357,6 +8380,7 @@
 /obj/item/clothing/head/radiation,
 /obj/item/geiger_counter,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aHy" = (
 /obj/structure/simple_door/room,
@@ -8470,6 +8494,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aIa" = (
 /obj/effect/decal/marking{
@@ -9489,6 +9514,7 @@
 /area/f13/building/powered)
 "aLI" = (
 /obj/structure/filingcabinet,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aLJ" = (
 /obj/effect/decal/waste{
@@ -9520,7 +9546,8 @@
 	pixel_x = 14;
 	pixel_y = -9
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "aLN" = (
 /obj/structure/fence,
 /turf/open/indestructible/ground/outside/dirt{
@@ -9574,7 +9601,8 @@
 	pixel_y = 18
 	},
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "aLX" = (
 /obj/structure/fence/wooden{
 	dir = 4;
@@ -11863,6 +11891,7 @@
 /obj/structure/rack/shelf_metal,
 /obj/effect/spawner/lootdrop/low_tools,
 /obj/item/stock_parts/cell/ammo/mfc,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aTV" = (
 /obj/item/ammo_casing/c9mm,
@@ -11908,6 +11937,7 @@
 	dir = 8
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aUf" = (
 /obj/structure/closet,
@@ -12448,11 +12478,13 @@
 /obj/machinery/light/small{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aWG" = (
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 10
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aWH" = (
 /obj/item/clothing/shoes/f13/rag,
@@ -12486,7 +12518,8 @@
 /obj/structure/railing{
 	dir = 9
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "aWQ" = (
 /obj/effect/overlay/junk/toilet{
 	dir = 8
@@ -12635,6 +12668,7 @@
 "aXz" = (
 /obj/structure/closet/crate/large,
 /obj/effect/spawner/lootdrop/f13/weapon/gun/energy/low,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aXA" = (
 /obj/machinery/chem_master/primitive,
@@ -12660,9 +12694,6 @@
 /obj/structure/f13/mojave_legacy/barrel/quad/red/v2,
 /turf/open/indestructible/ground/outside/road,
 /area/f13/wasteland)
-"aXI" = (
-/turf/open/floor/plasteel/stairs,
-/area/f13/radiation)
 "aXJ" = (
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
@@ -12671,6 +12702,7 @@
 /obj/structure/sign/warning/enginesafety{
 	pixel_y = 30
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "aXL" = (
 /obj/structure/flora/ausbushes/grassybush,
@@ -12697,7 +12729,8 @@
 /obj/structure/railing/corner{
 	dir = 4
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "aXS" = (
 /obj/structure/rack/shelf_metal,
 /obj/item/radio/headset/headset_bos,
@@ -12709,9 +12742,6 @@
 	icon_state = "reddirtyfull"
 	},
 /area/f13/brotherhood/armory)
-"aXT" = (
-/obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
 "aXY" = (
 /obj/structure/car/rubbish2,
 /turf/open/indestructible/ground/outside/road{
@@ -13071,6 +13101,7 @@
 /obj/item/clothing/under/f13/atombeliever,
 /obj/item/clothing/suit/armor/atomzealot,
 /obj/item/clothing/suit/armor/atomwitch,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bai" = (
 /obj/structure/debris/v3,
@@ -14841,6 +14872,7 @@
 	dir = 4;
 	light_color = "#c1caff"
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bjb" = (
 /obj/structure/flora/ausbushes/grassybush,
@@ -14851,6 +14883,7 @@
 	id = "factory2";
 	name = "shutters"
 	},
+/turf/template_noop,
 /area/f13/building/massfusion)
 "bjh" = (
 /obj/structure/rack/shelf_metal{
@@ -14861,6 +14894,7 @@
 	light_color = "#d8b1b1"
 	},
 /obj/effect/spawner/lootdrop/f13/weapon/gun/energy/low,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bjm" = (
 /obj/structure/barricade/sandbags,
@@ -14881,6 +14915,7 @@
 	dir = 8
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bjq" = (
 /obj/structure/fence/wooden{
@@ -14901,6 +14936,7 @@
 /obj/structure/f13/mojave_toggle_door{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bju" = (
 /obj/structure/window/fulltile/house{
@@ -14921,6 +14957,7 @@
 /obj/effect/spawner/lootdrop/f13/weapon/gun/ammo/tier3,
 /obj/effect/spawner/lootdrop/f13/weapon/gun/ballistic/lowmid,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bjx" = (
 /obj/machinery/computer/terminal{
@@ -14932,6 +14969,7 @@
 	dir = 4
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bjE" = (
 /mob/living/simple_animal/hostile/ghoul,
@@ -15038,6 +15076,7 @@
 	dir = 8;
 	pixel_x = -12
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bkE" = (
 /obj/effect/decal/cleanable/oil{
@@ -15051,11 +15090,13 @@
 /obj/machinery/shower{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bkG" = (
 /obj/structure/railing{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bkH" = (
 /obj/item/paper_bin,
@@ -15064,6 +15105,7 @@
 	dir = 4
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bkI" = (
 /obj/structure/flora/ausbushes/grassybush,
@@ -15079,6 +15121,7 @@
 	termtag = "Security"
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bkK" = (
 /obj/structure/stairs/west{
@@ -15122,6 +15165,7 @@
 	pixel_y = 9
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bkX" = (
 /obj/effect/decal/cleanable/dirt,
@@ -15140,6 +15184,7 @@
 /area/f13/building/massfusion)
 "blb" = (
 /obj/machinery/light,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "blc" = (
 /obj/effect/decal/cleanable/oil,
@@ -15253,6 +15298,7 @@
 	dir = 1
 	},
 /obj/item/stock_parts/cell/ammo/ecp,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "blM" = (
 /obj/effect/turf_decal/weather/dirt,
@@ -15320,6 +15366,7 @@
 /obj/structure/rack/shelf_metal{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bmh" = (
 /obj/structure/sign/poster/prewar/poster93{
@@ -15381,10 +15428,8 @@
 /obj/structure/stairs{
 	dir = 8
 	},
-/turf/open/floor/plasteel/f13{
-	icon_state = "darkrusty"
-	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "bmB" = (
 /obj/structure/table,
 /obj/effect/spawner/lootdrop/f13/weapon/melee/random,
@@ -15423,6 +15468,7 @@
 	dir = 8;
 	light_color = "#e8eaff"
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bmO" = (
 /obj/structure/stairs/north,
@@ -15482,6 +15528,7 @@
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bns" = (
 /obj/structure/f13/mojave_deco/street_sign/stop,
@@ -16504,6 +16551,7 @@
 "bxL" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/landmark/start/f13/massfusionhazardrecovery,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bxQ" = (
 /obj/structure/table/wood/fancy,
@@ -16622,6 +16670,7 @@
 /area/f13/wasteland)
 "byZ" = (
 /obj/effect/landmark/start/f13/massfusionhazardrecovery,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bzf" = (
 /obj/structure/sink{
@@ -17349,7 +17398,8 @@
 	pixel_x = 28
 	},
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "bKT" = (
 /obj/machinery/autolathe,
 /obj/structure/railing{
@@ -17662,7 +17712,8 @@
 /area/f13/building/mall)
 "bOE" = (
 /obj/effect/decal/cleanable/chem_pile,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "bPg" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
@@ -17991,6 +18042,9 @@
 /area/f13/radiation)
 "bWv" = (
 /obj/structure/f13/mojave_prop/structure_wall_decor__NCR_enlist,
+/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube{
+	dir = 1
+	},
 /turf/closed/wall/mojave/concrete,
 /area/f13/ncr)
 "bWA" = (
@@ -18105,6 +18159,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "bZq" = (
 /obj/structure/table/reinforced,
@@ -18346,6 +18401,7 @@
 /area/f13/building)
 "cdl" = (
 /obj/effect/decal/cleanable/generic,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "cdo" = (
 /obj/effect/decal/cleanable/dirt,
@@ -18572,7 +18628,8 @@
 /area/f13/legion)
 "chA" = (
 /obj/effect/landmark/start/f13/massfusionreactoroperator,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "chE" = (
 /obj/structure/fluff/railing{
 	dir = 4;
@@ -19718,7 +19775,8 @@
 	pixel_y = -14
 	},
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "cro" = (
 /obj/structure/table/wood,
 /obj/item/storage/backpack/satchel/leather,
@@ -20350,6 +20408,7 @@
 /area/f13/wasteland)
 "czg" = (
 /obj/machinery/f13/faction_control_console,
+/turf/template_noop,
 /area/f13/building/massfusion)
 "czi" = (
 /obj/effect/decal/marking{
@@ -20452,6 +20511,7 @@
 /obj/structure/grid/valve{
 	component_tag = coolant_valve_1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "cAW" = (
 /obj/structure/flora/grass/wasteland{
@@ -20486,6 +20546,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "cBK" = (
 /obj/structure/chair/f13chair2{
@@ -20589,6 +20650,7 @@
 /obj/structure/extinguisher_cabinet{
 	pixel_y = 30
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "cEH" = (
 /obj/structure/flora/timber,
@@ -20992,6 +21054,7 @@
 /obj/structure/grid/relief_valve{
 	pixel_y = -16
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "cOm" = (
 /obj/machinery/light/small{
@@ -21036,6 +21099,7 @@
 	id = "factory3";
 	name = "shutters"
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "cOT" = (
 /obj/effect/decal/cleanable/dirt,
@@ -21549,6 +21613,7 @@
 "daK" = (
 /obj/structure/simple_door/bunker,
 /obj/structure/barricade/wooden/planks,
+/turf/template_noop,
 /area/f13/building)
 "daO" = (
 /obj/effect/decal/cleanable/dirt{
@@ -21924,9 +21989,7 @@
 /turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building)
 "dhK" = (
-/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube{
-	dir = 1
-	},
+/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube,
 /turf/closed/indestructible/f13/vaultwall,
 /area/f13/building)
 "dic" = (
@@ -22104,12 +22167,6 @@
 	icon_state = "yellowrustychess"
 	},
 /area/f13/building/massfusion)
-"dma" = (
-/obj/effect/decal/cleanable/dirt,
-/obj/effect/turf_decal/stripes/asteroid/line{
-	dir = 8
-	},
-/area/f13/radiation)
 "dmg" = (
 /obj/structure/flora/grass/jungle,
 /obj/effect/decal/cleanable/dirt,
@@ -22432,6 +22489,7 @@
 "drI" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/spawner/lootdrop/f13/junkspawners,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "dse" = (
 /obj/machinery/light{
@@ -22782,6 +22840,7 @@
 /turf/open/indestructible/ground/outside/sidewalk,
 /area/f13/bunker)
 "dyw" = (
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "dyz" = (
 /obj/structure/table/reinforced,
@@ -22990,7 +23049,8 @@
 "dCd" = (
 /obj/structure/f13/grid_radiation_source,
 /obj/structure/f13/invisible_blocker,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "dCm" = (
 /obj/machinery/light{
 	dir = 1
@@ -23736,6 +23796,7 @@
 	name = "shutters"
 	},
 /obj/effect/decal/cleanable/blood/tracks,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "dRT" = (
 /obj/machinery/light/small/broken{
@@ -24837,6 +24898,7 @@
 	dir = 1;
 	light_color = "#706891"
 	},
+/turf/template_noop,
 /area/f13/caves)
 "eos" = (
 /obj/effect/decal/cleanable/blood/gibs,
@@ -24958,6 +25020,7 @@
 	dir = 8
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "eqk" = (
 /obj/machinery/microwave/stove,
@@ -25000,8 +25063,6 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building)
-"ese" = (
-/area/f13/radiation)
 "esi" = (
 /obj/machinery/light{
 	dir = 4
@@ -25230,6 +25291,7 @@
 /obj/machinery/door/poddoor/shutters/radiation{
 	dungeon_channel = westtek_second
 	},
+/turf/template_noop,
 /area/f13/building)
 "ewm" = (
 /obj/effect/turf_decal/weather/dirt{
@@ -26139,7 +26201,8 @@
 	pixel_x = -14;
 	pixel_y = -14
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "eMl" = (
 /obj/structure/table/wood/settler,
 /obj/effect/decal/cleanable/dirt,
@@ -26210,6 +26273,7 @@
 	dir = 4
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "eNm" = (
 /obj/structure/sign/poster/contraband/pinup_vixen{
@@ -26345,6 +26409,7 @@
 /area/f13/wasteland)
 "ePw" = (
 /obj/structure/closet,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ePz" = (
 /obj/structure/chair/booth{
@@ -26362,7 +26427,8 @@
 	pixel_x = 14;
 	pixel_y = -14
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "ePS" = (
 /obj/structure/table/wood,
 /obj/item/newspaper,
@@ -26883,7 +26949,8 @@
 /area/f13/building)
 "eYK" = (
 /obj/structure/reagent_dispensers/barrel/dangerous,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "eYX" = (
 /obj/structure/stairs/north{
 	color = "#A47449"
@@ -27018,6 +27085,7 @@
 "fbg" = (
 /obj/machinery/light,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "fbh" = (
 /obj/structure/table/wood,
@@ -27845,6 +27913,7 @@
 /area/f13/building/powered)
 "ftb" = (
 /obj/machinery/bounty_pod,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ftf" = (
 /obj/effect/decal/cleanable/dirt,
@@ -27896,6 +27965,7 @@
 /obj/machinery/teleport/station{
 	name = "power unit"
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ftY" = (
 /obj/machinery/shower{
@@ -28029,6 +28099,7 @@
 "fwC" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/landmark/start/f13/massfusionrelayengineer,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "fwJ" = (
 /obj/structure/car,
@@ -28089,6 +28160,7 @@
 /area/f13/wasteland)
 "fxD" = (
 /obj/structure/simple_door/metal/store,
+/turf/template_noop,
 /area/f13/building)
 "fxP" = (
 /obj/effect/decal/cleanable/dirt,
@@ -28375,9 +28447,6 @@
 /obj/effect/spawner/lootdrop/f13/advcrafting,
 /turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building)
-"fCH" = (
-/obj/structure/f13/invisible_blocker,
-/area/f13/radiation)
 "fDe" = (
 /obj/structure/flora/ausbushes/sparsegrass,
 /mob/living/simple_animal/chicken,
@@ -28628,7 +28697,8 @@
 	icon_state = "ladder10";
 	id = "powerplantleft"
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "fHU" = (
 /obj/structure/closet/crate/bin/trashbin,
 /turf/open/floor/plasteel/f13/vault_floor/misc/vaultrust,
@@ -28849,11 +28919,6 @@
 /obj/structure/table,
 /turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building)
-"fLx" = (
-/obj/effect/turf_decal/stripes/asteroid/line{
-	dir = 8
-	},
-/area/f13/radiation)
 "fLD" = (
 /obj/structure/flora/grass/wasteland{
 	icon_state = "tall_grass_3"
@@ -28999,6 +29064,8 @@
 "fOG" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/landmark/start/f13/massfusionscavenger,
+/obj/effect/landmark/start/f13/massfusiongridtechnician,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "fOH" = (
 /obj/effect/decal/cleanable/dirt,
@@ -29217,6 +29284,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "fTL" = (
 /obj/machinery/smartfridge/bottlerack/lootshelf/cans{
@@ -29559,6 +29627,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "gco" = (
 /obj/structure/wreck/bus/rusted/segmented16,
@@ -29657,6 +29726,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "gej" = (
 /obj/effect/turf_decal/arrows{
@@ -29699,6 +29769,7 @@
 "geU" = (
 /obj/structure/closet,
 /obj/item/clothing/under/f13/mechanic,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "geW" = (
 /obj/structure/kitchenspike,
@@ -30815,6 +30886,7 @@
 	id = "factory1"
 	},
 /obj/structure/f13/mojave_prop/structure_shutters__open_left_horizon_red,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "gBi" = (
 /obj/structure/fermenting_barrel/broc,
@@ -31161,6 +31233,7 @@
 	dir = 8
 	},
 /obj/effect/decal/cleanable/generic,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "gHa" = (
 /obj/structure/fence{
@@ -31503,6 +31576,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "gMA" = (
 /obj/effect/decal/cleanable/dirt,
@@ -32497,6 +32571,7 @@
 "heK" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "heO" = (
 /obj/structure/flora/wasteplant/wild_punga,
@@ -32705,7 +32780,8 @@
 "hkO" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/chem_pile,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "hkV" = (
 /obj/structure/flora/ausbushes/sparsegrass,
 /turf/open/indestructible/ground/outside/dirt,
@@ -33511,6 +33587,7 @@
 	},
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "hEc" = (
 /obj/structure/table{
@@ -33973,6 +34050,7 @@
 "hNP" = (
 /obj/effect/decal/cleanable/glass,
 /obj/structure/railing/corrugated,
+/turf/template_noop,
 /area/f13/building)
 "hOa" = (
 /obj/structure/junk/small/table,
@@ -34041,6 +34119,7 @@
 "hPG" = (
 /obj/structure/closet,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "hPK" = (
 /obj/machinery/vending/nukacolavend,
@@ -34642,6 +34721,7 @@
 "ids" = (
 /obj/effect/overlay/window,
 /obj/structure/spacevine,
+/turf/template_noop,
 /area/f13/building)
 "idt" = (
 /obj/structure/fence{
@@ -35907,6 +35987,7 @@
 	pixel_y = 7
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "izv" = (
 /obj/structure/flora/grass/wasteland{
@@ -36069,6 +36150,7 @@
 "iCI" = (
 /obj/effect/decal/cleanable/blood/tracks,
 /obj/effect/turf_decal/stripes/asteroid/line,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "iCX" = (
 /obj/effect/decal/remains{
@@ -36366,6 +36448,7 @@
 /area/f13/building/massfusion)
 "iGO" = (
 /obj/structure/filingcabinet/chestdrawer,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "iGQ" = (
 /obj/structure/table/wood,
@@ -36743,6 +36826,7 @@
 "iOg" = (
 /obj/effect/overlay/window,
 /obj/structure/railing/corrugated,
+/turf/template_noop,
 /area/f13/building)
 "iOh" = (
 /obj/structure/flora/tallgrass9,
@@ -36781,6 +36865,7 @@
 /obj/effect/overlay/window,
 /obj/structure/spacevine,
 /obj/structure/railing/corrugated,
+/turf/template_noop,
 /area/f13/building)
 "iPb" = (
 /obj/effect/decal/cleanable/dirt,
@@ -37735,6 +37820,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 6
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "jih" = (
 /obj/structure/wreck/trash/machinepiletwo,
@@ -37791,6 +37877,7 @@
 "jjp" = (
 /obj/structure/closet,
 /obj/item/geiger_counter,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "jjq" = (
 /obj/structure/closet/cabinet,
@@ -38688,7 +38775,8 @@
 	component_tag = hx_1
 	},
 /obj/structure/f13/invisible_blocker,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "jBy" = (
 /obj/structure/table/wood,
 /turf/open/floor/f13/wood,
@@ -38793,9 +38881,6 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/open/floor/f13/wood,
 /area/f13/building)
-"jEC" = (
-/obj/effect/decal/cleanable/generic,
-/area/f13/radiation)
 "jEG" = (
 /obj/machinery/light{
 	dir = 8;
@@ -38867,6 +38952,7 @@
 	name = "power unit"
 	},
 /obj/effect/decal/cleanable/generic,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "jFR" = (
 /obj/effect/turf_decal/shadow/floor,
@@ -39304,6 +39390,7 @@
 /obj/item/storage/briefcase,
 /obj/item/pen/fountain,
 /obj/effect/spawner/lootdrop/ammo,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "jPD" = (
 /obj/structure/loom,
@@ -39360,7 +39447,8 @@
 	pixel_x = -18;
 	pixel_y = 18
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "jRf" = (
 /obj/effect/turf_decal/stripes/white/line{
 	dir = 4
@@ -39410,6 +39498,7 @@
 "jRV" = (
 /obj/effect/decal/cleanable/generic,
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "jSc" = (
 /obj/structure/destructible/tribal_torch/lit{
@@ -39475,7 +39564,8 @@
 	pixel_x = 14;
 	pixel_y = -14
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "jTl" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/barricade/bars,
@@ -40108,6 +40198,7 @@
 /obj/machinery/light{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "kjF" = (
 /obj/structure/barricade/wooden,
@@ -40137,7 +40228,8 @@
 	pixel_y = -8
 	},
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "kjU" = (
 /obj/structure/sign/poster/official/cohiba_robusto_ad{
 	pixel_y = 32
@@ -40518,6 +40610,7 @@
 "krJ" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "krM" = (
 /obj/structure/table/wood,
@@ -40592,6 +40685,7 @@
 	dir = 4
 	},
 /obj/effect/turf_decal/vg_decals/numbers/two,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "kti" = (
 /obj/structure/fermenting_barrel{
@@ -40713,6 +40807,7 @@
 /area/f13/radiation)
 "kvo" = (
 /obj/machinery/f13/grid_faction_district_console,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "kvs" = (
 /obj/structure/barricade/wooden,
@@ -40794,6 +40889,7 @@
 /area/f13/building/powered)
 "kxo" = (
 /obj/structure/simple_door/bunker,
+/turf/template_noop,
 /area/f13/building)
 "kxy" = (
 /obj/structure/rack,
@@ -41151,6 +41247,7 @@
 	dir = 8
 	},
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "kEU" = (
 /obj/machinery/f13/parcel_receiver_terminal/town,
@@ -41594,6 +41691,7 @@
 "kMl" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/turf_decal/stripes/asteroid/line,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "kMw" = (
 /obj/structure/window/reinforced/fulltile,
@@ -42025,6 +42123,7 @@
 /obj/structure/rack/shelf_metal{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "kTO" = (
 /mob/living/simple_animal/hostile/mirelurk,
@@ -42349,11 +42448,6 @@
 	icon_state = "floorrusty"
 	},
 /area/f13/building/firestation)
-"laF" = (
-/obj/structure/extinguisher_cabinet{
-	pixel_x = -28
-	},
-/area/f13/radiation)
 "laV" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
@@ -43201,7 +43295,8 @@
 	pixel_y = 18
 	},
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "ltt" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
@@ -43282,6 +43377,7 @@
 /area/f13/wasteland)
 "lvZ" = (
 /obj/item/chair,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "lwl" = (
 /obj/structure/barricade/sandbags,
@@ -43315,7 +43411,8 @@
 /obj/structure/railing/corner{
 	dir = 1
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "lwE" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
@@ -43350,6 +43447,7 @@
 /obj/item/reagent_containers/blood/radaway,
 /obj/item/reagent_containers/blood/radaway,
 /obj/item/reagent_containers/blood/radaway,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "lxZ" = (
 /obj/machinery/door/poddoor/shutters/old{
@@ -43618,6 +43716,7 @@
 /obj/item/clothing/mask/gas,
 /obj/item/clothing/mask/gas,
 /obj/item/clothing/mask/gas,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "lDv" = (
 /obj/structure/flora/grass/wasteland{
@@ -43957,6 +44056,7 @@
 /obj/machinery/light/small{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "lIU" = (
 /obj/effect/spawner/structure/window/plastitanium,
@@ -44436,6 +44536,7 @@
 	},
 /obj/effect/decal/cleanable/blood/drip,
 /obj/effect/decal/cleanable/blood/drip,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "lRX" = (
 /obj/structure/table,
@@ -44676,6 +44777,7 @@
 "lVo" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/oil/slippery,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "lVr" = (
 /obj/structure/table,
@@ -45375,6 +45477,7 @@
 	dir = 8
 	},
 /obj/effect/landmark/start/f13/massfusionscavenger,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "mjc" = (
 /obj/structure/bed/roller,
@@ -46014,7 +46117,8 @@
 	light_color = "#e8eaff"
 	},
 /obj/effect/decal/cleanable/dirt,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "msU" = (
 /obj/structure/flora/grass/jungle/b,
 /turf/open/floor/f13/wood,
@@ -46874,6 +46978,12 @@
 	icon_state = "outerpavementcorner"
 	},
 /area/f13/wasteland)
+"mLC" = (
+/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube{
+	dir = 4
+	},
+/turf/closed/wall/mojave/concrete,
+/area/f13/ncr)
 "mLE" = (
 /obj/structure/wreck/trash/two_barrels,
 /obj/effect/decal/waste{
@@ -46966,6 +47076,7 @@
 /area/f13/wasteland)
 "mNo" = (
 /obj/effect/turf_decal/huge/massfusion,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "mNI" = (
 /obj/machinery/bounty_machine/faction,
@@ -47463,6 +47574,9 @@
 /area/f13/wasteland)
 "mXr" = (
 /obj/structure/f13/mojave_prop/structure_pipes__box,
+/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube{
+	dir = 1
+	},
 /turf/closed/wall/mojave/concrete,
 /area/f13/ncr)
 "mXz" = (
@@ -48679,6 +48793,7 @@
 /obj/machinery/light{
 	pixel_x = 16
 	},
+/turf/template_noop,
 /area/f13/caves)
 "nuc" = (
 /obj/effect/decal/cleanable/dirt{
@@ -48737,7 +48852,8 @@
 /obj/structure/fence/handrail{
 	pixel_y = -8
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "nvf" = (
 /obj/machinery/door/unpowered/secure_steeldoor{
 	req_access_txt = "276";
@@ -48790,7 +48906,8 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "nwk" = (
 /obj/structure/flora/grass/jungle,
 /obj/effect/turf_decal/gravel_edge{
@@ -49546,6 +49663,7 @@
 /obj/machinery/door/poddoor/shutters/radiation{
 	dungeon_channel = westtek_second
 	},
+/turf/template_noop,
 /area/f13/building)
 "nMG" = (
 /obj/structure/table/wood,
@@ -49693,6 +49811,7 @@
 "nQK" = (
 /obj/structure/simple_door/metal/store,
 /obj/structure/spacevine,
+/turf/template_noop,
 /area/f13/building)
 "nQO" = (
 /obj/structure/flora/rock/pile/largejungle{
@@ -49782,6 +49901,7 @@
 /obj/machinery/shower{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "nRY" = (
 /obj/effect/decal/cleanable/dirt,
@@ -50488,6 +50608,7 @@
 	pixel_y = 30
 	},
 /obj/item/stack/crafting/electronicparts/five,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ogc" = (
 /turf/open/indestructible/ground/outside/desert,
@@ -50661,6 +50782,7 @@
 /area/f13/building/powered)
 "oiZ" = (
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ojb" = (
 /obj/structure/closet/crate,
@@ -50908,6 +51030,7 @@
 /area/f13/legion)
 "oow" = (
 /obj/effect/landmark/start/f13/massfusionrelayengineer,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ooA" = (
 /obj/effect/decal/cleanable/dirt,
@@ -51322,6 +51445,7 @@
 /area/f13/wasteland)
 "ovK" = (
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ovV" = (
 /obj/structure/table,
@@ -51696,6 +51820,7 @@
 "oCx" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/f13/invisible_blocker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "oCA" = (
 /obj/effect/decal/cleanable/oil/slippery,
@@ -51865,7 +51990,8 @@
 /obj/structure/fence/handrail{
 	pixel_y = 18
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "oFM" = (
 /obj/effect/decal/cleanable/dirt{
 	color = "#363636"
@@ -52264,6 +52390,7 @@
 /area/f13/building)
 "oNI" = (
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "oNJ" = (
 /obj/effect/turf_decal/gravel_edge{
@@ -52516,6 +52643,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "oUa" = (
 /obj/structure/barricade/tentleatheredge{
@@ -54203,6 +54331,7 @@
 /area/f13/building/powered)
 "pyF" = (
 /obj/structure/junk/small/bed,
+/turf/template_noop,
 /area/f13/caves)
 "pyG" = (
 /obj/structure/rack,
@@ -55474,6 +55603,7 @@
 /area/f13/building)
 "pXk" = (
 /obj/effect/decal/cleanable/blood/tracks,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "pXm" = (
 /obj/machinery/door/poddoor/shutters/old{
@@ -55558,9 +55688,6 @@
 /obj/structure/bonfire/safe,
 /turf/open/indestructible/ground/outside/desert/sonora/rough,
 /area/f13/wasteland)
-"pZn" = (
-/obj/effect/decal/cleanable/oil/slippery,
-/area/f13/radiation)
 "pZv" = (
 /obj/effect/turf_decal/gravel_edge{
 	dir = 1
@@ -56124,6 +56251,7 @@
 /obj/item/clothing/glasses/welding,
 /obj/item/clothing/glasses/welding,
 /obj/structure/shelf_wood,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "qle" = (
 /obj/machinery/light{
@@ -56570,6 +56698,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "qtT" = (
 /obj/effect/decal/marking{
@@ -56581,6 +56710,7 @@
 /area/f13/building)
 "qtZ" = (
 /obj/effect/overlay/window,
+/turf/template_noop,
 /area/f13/building)
 "quc" = (
 /obj/structure/simple_door/metal/dirtystore,
@@ -56880,6 +57010,7 @@
 "qBw" = (
 /obj/machinery/light,
 /mob/living/simple_animal/hostile/raider/junker,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "qBD" = (
 /turf/open/floor/f13{
@@ -56997,6 +57128,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "qGb" = (
 /obj/effect/landmark/start/f13/wastelander,
@@ -58192,6 +58324,7 @@
 /area/f13/building)
 "rcW" = (
 /obj/structure/table,
+/turf/template_noop,
 /area/f13/caves)
 "rcY" = (
 /obj/structure/spacevine,
@@ -58259,6 +58392,7 @@
 /area/f13/ncr)
 "rew" = (
 /obj/effect/spawner/lootdrop/f13/junkspawners,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "reB" = (
 /obj/structure/barricade/wooden,
@@ -58700,6 +58834,7 @@
 /area/f13/wasteland)
 "row" = (
 /mob/living/simple_animal/hostile/chinese/ranged/assault,
+/turf/template_noop,
 /area/f13/caves)
 "roG" = (
 /obj/structure/flora/grass/coyote/twentythree,
@@ -58737,6 +58872,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "rpQ" = (
 /obj/effect/decal/cleanable/dirt{
@@ -59230,10 +59366,8 @@
 /area/f13/building)
 "rDt" = (
 /obj/structure/lattice/catwalk,
-/turf/open/floor/plasteel/f13{
-	icon_state = "darkrusty"
-	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "rDz" = (
 /obj/structure/table/reinforced,
 /obj/structure/barricade/bars{
@@ -60170,6 +60304,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "rWn" = (
 /obj/structure/toilet{
@@ -60874,6 +61009,7 @@
 	dir = 4
 	},
 /obj/effect/spawner/lootdrop/low_tools,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "skW" = (
 /obj/structure/cable{
@@ -62560,6 +62696,7 @@
 /obj/structure/rack/shelf_metal{
 	dir = 4
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "sWw" = (
 /obj/structure/fence{
@@ -63428,7 +63565,8 @@
 	pixel_x = -14;
 	pixel_y = -8
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "tpK" = (
 /obj/effect/decal/cleanable/dirt,
 /turf/open/indestructible/ground/outside/sidewalk{
@@ -63560,6 +63698,7 @@
 	},
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/turf_decal/stripes/asteroid/line,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "tro" = (
 /obj/structure/car/rubbish2,
@@ -64307,6 +64446,7 @@
 /obj/item/tank/internals/oxygen,
 /obj/item/tank/internals/oxygen,
 /obj/item/tank/internals/oxygen,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "tEq" = (
 /obj/structure/closet/fridge/cannibal,
@@ -64696,6 +64836,7 @@
 	pixel_y = 6
 	},
 /obj/structure/table/reinforced,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "tLI" = (
 /obj/structure/chair/stool,
@@ -64732,9 +64873,7 @@
 "tMi" = (
 /obj/effect/decal/cleanable/oil/slippery,
 /obj/structure/f13/mojave_toggle_door,
-/turf/open/floor/plasteel/f13{
-	icon_state = "darkrustysolid"
-	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "tMk" = (
 /obj/effect/decal/cleanable/dirt,
@@ -65183,11 +65322,9 @@
 	},
 /area/f13/building/trainstation)
 "tVb" = (
-/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube{
-	dir = 4
-	},
-/turf/closed/indestructible/f13/vaultwall,
-/area/f13/building)
+/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube,
+/turf/closed/wall/mojave/concrete,
+/area/f13/ncr)
 "tVn" = (
 /obj/effect/decal/marking{
 	icon_state = "doublehorizontal"
@@ -65599,7 +65736,8 @@
 	pixel_y = -24
 	},
 /obj/structure/f13/invisible_blocker,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "ueP" = (
 /obj/structure/flora/grass/wasteland{
 	icon_state = "tall_grass_3"
@@ -65813,6 +65951,7 @@
 "uiB" = (
 /obj/structure/table,
 /obj/item/clothing/suit/armor/medium/combat/chinese,
+/turf/template_noop,
 /area/f13/caves)
 "uiP" = (
 /obj/effect/decal/cleanable/dirt,
@@ -66115,6 +66254,7 @@
 	pixel_y = -16;
 	component_tag = relief_1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "uoS" = (
 /obj/machinery/chem_dispenser/drinks/beer{
@@ -66275,16 +66415,19 @@
 /obj/machinery/light/small/broken{
 	dir = 1
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "usn" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/reagent_dispensers/barrel/dangerous,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "usw" = (
 /obj/machinery/light{
 	dir = 4;
 	light_color = "#c1caff"
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "usx" = (
 /obj/structure/campfire/barrel,
@@ -66669,6 +66812,7 @@
 /area/f13/building)
 "uAL" = (
 /obj/effect/decal/cleanable/oil/slippery,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "uAV" = (
 /obj/effect/decal/cleanable/dirt{
@@ -66846,6 +66990,7 @@
 /area/f13/building/museum)
 "uEc" = (
 /obj/structure/f13/mojave_toggle_door,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "uEx" = (
 /obj/structure/table/wood/settler,
@@ -67196,6 +67341,12 @@
 	icon_state = "verticalrightborderright1"
 	},
 /area/f13/building)
+"uJV" = (
+/obj/structure/f13/mojave_light_prop/structure_lighting__light_tube{
+	dir = 8
+	},
+/turf/closed/wall/mojave/concrete,
+/area/f13/ncr)
 "uKe" = (
 /obj/structure/campfire,
 /turf/open/indestructible/ground/outside/dirt,
@@ -68463,7 +68614,8 @@
 	icon_state = "ladder10";
 	id = "powerplantright"
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "vjK" = (
 /obj/machinery/light/lamp_post,
 /obj/effect/decal/cleanable/dirt,
@@ -68978,6 +69130,7 @@
 	},
 /area/f13/wasteland)
 "vtL" = (
+/turf/template_noop,
 /area/f13/caves)
 "vuc" = (
 /obj/structure/tires/half,
@@ -69435,20 +69588,13 @@
 	pixel_x = -12
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "vDf" = (
 /turf/open/indestructible/ground/outside/sidewalk{
 	icon_state = "horizontaloutermain2"
 	},
 /area/f13/city)
-"vDl" = (
-/obj/structure/f13/mojave_toggle_door{
-	dir = 4
-	},
-/turf/open/floor/plasteel/f13{
-	icon_state = "floorrustysolid"
-	},
-/area/f13/building/massfusion)
 "vDs" = (
 /turf/closed/wall/f13/tentwall,
 /area/f13/caves)
@@ -69470,9 +69616,9 @@
 /area/f13/wasteland)
 "vEa" = (
 /obj/item/paper/carbon{
-	add_text = list("ENCLAVE LOG — PARTIALLY DAMAGEDThis record is intact enough to read, but parts of it are smeared, as if whoever left it didn’t want everything perfectly clear.One of the senior scientists escaped during the initial collapse of the West-Tek facility. He wasn’t part of the original evacuation window and left without authorization. Command ordered a squad insertion to secure the site and retrieve him.The operation failed.Mutant presence inside the facility was far heavier than expected. The squad was pushed back almost immediately. In an attempt to regain control, the internal security system was activated. Automated defenses came online and the facility entered full lockdown. The system did not distinguish between hostile and friendly targets. Access routes were sealed and several sections were permanently cut off.The scientist was not recovered.According to the remaining movement logs, he was last seen moving toward the cargo area. No further tracking data exists after that point.If you’re here now, this is how you’re meant to proceed.First, go to the Executive Office. You’ll need the security keycode stored on the executive terminals. That code is required to unlock access to the deeper sections of the facility.Once you have it, locate the Chief Scientist. He still has clearance for the high-security areas. Doors beyond the executive level will not open without his authorization or credentials.A keycard has been left with this log. Use it on the main entrance scanner to gain access.The facility is still in lockdown. Automated systems are active. Assume internal defenses are hostile.This record ends here.");
+	add_text = list("ENCLAVE LOG â€” PARTIALLY DAMAGEDThis record is intact enough to read, but parts of it are smeared, as if whoever left it didnâ€™t want everything perfectly clear.One of the senior scientists escaped during the initial collapse of the West-Tek facility. He wasnâ€™t part of the original evacuation window and left without authorization. Command ordered a squad insertion to secure the site and retrieve him.The operation failed.Mutant presence inside the facility was far heavier than expected. The squad was pushed back almost immediately. In an attempt to regain control, the internal security system was activated. Automated defenses came online and the facility entered full lockdown. The system did not distinguish between hostile and friendly targets. Access routes were sealed and several sections were permanently cut off.The scientist was not recovered.According to the remaining movement logs, he was last seen moving toward the cargo area. No further tracking data exists after that point.If youâ€™re here now, this is how youâ€™re meant to proceed.First, go to the Executive Office. Youâ€™ll need the security keycode stored on the executive terminals. That code is required to unlock access to the deeper sections of the facility.Once you have it, locate the Chief Scientist. He still has clearance for the high-security areas. Doors beyond the executive level will not open without his authorization or credentials.A keycard has been left with this log. Use it on the main entrance scanner to gain access.The facility is still in lockdown. Automated systems are active. Assume internal defenses are hostile.This record ends here.");
 	name = "FIELD LOG";
-	text = ENCLAVELOG—PARTIALLYDAMAGEDThisrecordisintactenoughtoread,butpartsofitaresmeared,asifwhoeverleftitdidn’twanteverythingperfectlyclear.OneoftheseniorscientistsescapedduringtheinitialcollapseoftheWest-Tekfacility.Hewasn’tpartoftheoriginalevacuationwindowandleftwithoutauthorization.Commandorderedasquadinsertiontosecurethesiteandretrievehim.Theoperationfailed.Mutantpresenceinsidethefacilitywasfarheavierthanexpected.Thesquadwaspushedbackalmostimmediately.Inanattempttoregaincontrol,theinternalsecuritysystemwasactivated.Automateddefensescameonlineandthefacilityenteredfulllockdown.Thesystemdidnotdistinguishbetweenhostileandfriendlytargets.Accessroutesweresealedandseveralsectionswerepermanentlycutoff.Thescientistwasnotrecovered.Accordingtotheremainingmovementlogs,hewaslastseenmovingtowardthecargoarea.Nofurthertrackingdataexistsafterthatpoint.Ifyou’reherenow,thisishowyou’remeanttoproceed.First,gototheExecutiveOffice.You’llneedthesecuritykeycodestoredontheexecutiveterminals.Thatcodeisrequiredtounlockaccesstothedeepersectionsofthefacility.Onceyouhaveit,locatetheChiefScientist.Hestillhasclearanceforthehigh-securityareas.Doorsbeyondtheexecutivelevelwillnotopenwithouthisauthorizationorcredentials.Akeycardhasbeenleftwiththislog.Useitonthemainentrancescannertogainaccess.Thefacilityisstillinlockdown.Automatedsystemsareactive.Assumeinternaldefensesarehostile.Thisrecordendshere.
+	text = ENCLAVELOGâ€”PARTIALLYDAMAGEDThisrecordisintactenoughtoread,butpartsofitaresmeared,asifwhoeverleftitdidnâ€™twanteverythingperfectlyclear.OneoftheseniorscientistsescapedduringtheinitialcollapseoftheWest-Tekfacility.Hewasnâ€™tpartoftheoriginalevacuationwindowandleftwithoutauthorization.Commandorderedasquadinsertiontosecurethesiteandretrievehim.Theoperationfailed.Mutantpresenceinsidethefacilitywasfarheavierthanexpected.Thesquadwaspushedbackalmostimmediately.Inanattempttoregaincontrol,theinternalsecuritysystemwasactivated.Automateddefensescameonlineandthefacilityenteredfulllockdown.Thesystemdidnotdistinguishbetweenhostileandfriendlytargets.Accessroutesweresealedandseveralsectionswerepermanentlycutoff.Thescientistwasnotrecovered.Accordingtotheremainingmovementlogs,hewaslastseenmovingtowardthecargoarea.Nofurthertrackingdataexistsafterthatpoint.Ifyouâ€™reherenow,thisishowyouâ€™remeanttoproceed.First,gototheExecutiveOffice.Youâ€™llneedthesecuritykeycodestoredontheexecutiveterminals.Thatcodeisrequiredtounlockaccesstothedeepersectionsofthefacility.Onceyouhaveit,locatetheChiefScientist.Hestillhasclearanceforthehigh-securityareas.Doorsbeyondtheexecutivelevelwillnotopenwithouthisauthorizationorcredentials.Akeycardhasbeenleftwiththislog.Useitonthemainentrancescannertogainaccess.Thefacilityisstillinlockdown.Automatedsystemsareactive.Assumeinternaldefensesarehostile.Thisrecordendshere.
 	},
 /turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building)
@@ -69531,6 +69677,7 @@
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/spawner/lootdrop/f13/junkspawners,
 /obj/effect/landmark/start/f13/massfusionscavenger,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "vGl" = (
 /obj/structure/barricade/wooden,
@@ -69539,6 +69686,7 @@
 "vGp" = (
 /obj/effect/decal/cleanable/generic,
 /obj/effect/spawner/lootdrop/f13/junkspawners,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "vGu" = (
 /obj/effect/decal/cleanable/dirt,
@@ -69734,7 +69882,8 @@
 /obj/effect/decal/cleanable/generic,
 /obj/item/stack/sheet/mineral/uranium,
 /obj/effect/decal/cleanable/greenglow,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "vLg" = (
 /obj/structure/destructible/tribal_torch/wall/lit{
 	dir = 4;
@@ -69875,7 +70024,8 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 4
 	},
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "vNZ" = (
 /obj/structure/cable{
 	icon_state = "4-8"
@@ -70294,6 +70444,7 @@
 "vWQ" = (
 /obj/effect/decal/cleanable/generic,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "vWT" = (
 /obj/item/toy/beach_ball/holoball,
@@ -70509,6 +70660,7 @@
 /area/f13/caves)
 "wbw" = (
 /obj/effect/turf_decal/stripes/asteroid/line,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wbL" = (
 /obj/structure/flora/grass/wasteland{
@@ -70533,6 +70685,7 @@
 /area/f13/wasteland)
 "wcM" = (
 /obj/effect/turf_decal/vg_decals/numbers/three,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wcN" = (
 /obj/structure/sign/departments/medbay/alt,
@@ -70822,6 +70975,7 @@
 	},
 /obj/effect/spawner/lootdrop/low_tools,
 /obj/effect/decal/cleanable/generic,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "whF" = (
 /obj/effect/spawner/lootdrop/f13/weapon/melee/random,
@@ -70849,6 +71003,7 @@
 "wiV" = (
 /obj/structure/rack/shelf_metal,
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wjb" = (
 /turf/open/indestructible/ground/outside/sidewalk{
@@ -71074,6 +71229,7 @@
 	dir = 4
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wnt" = (
 /obj/structure/barricade/wooden,
@@ -71653,6 +71809,7 @@
 	},
 /obj/effect/decal/cleanable/dirt,
 /obj/structure/railing/corner,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wAG" = (
 /obj/effect/decal/cleanable/dirt{
@@ -71874,6 +72031,7 @@
 /obj/structure/closet,
 /obj/item/clothing/suit/radiation,
 /obj/item/clothing/head/radiation,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wEx" = (
 /obj/effect/decal/cleanable/dirt,
@@ -72197,6 +72355,7 @@
 	dir = 4
 	},
 /obj/effect/spawner/lootdrop/f13/medical/rnd/mid,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wMc" = (
 /obj/effect/turf_decal/shadow,
@@ -72804,6 +72963,7 @@
 	dir = 4
 	},
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "wYf" = (
 /obj/structure/fence/wooden{
@@ -72975,6 +73135,7 @@
 "xco" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/item/stock_parts/cell/ammo/ecp,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xcu" = (
 /obj/effect/decal/cleanable/dirt,
@@ -73018,6 +73179,7 @@
 /obj/structure/extinguisher_cabinet{
 	pixel_x = -28
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xcN" = (
 /obj/structure/closet/cabinet,
@@ -73269,6 +73431,7 @@
 	id = "factory1"
 	},
 /obj/structure/f13/mojave_prop/structure_shutters__open_mid_horizon_red,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xgM" = (
 /obj/machinery/light{
@@ -74090,6 +74253,7 @@
 "xxJ" = (
 /obj/effect/overlay/window,
 /obj/effect/decal/cleanable/dirt,
+/turf/template_noop,
 /area/f13/building)
 "xxN" = (
 /turf/open/indestructible/ground/outside/sidewalk{
@@ -74270,6 +74434,7 @@
 	pixel_y = 5
 	},
 /obj/structure/table,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xBm" = (
 /obj/effect/decal/cleanable/blood/old,
@@ -74452,10 +74617,6 @@
 	},
 /turf/open/floor/plasteel/f13/vault_floor/red/white,
 /area/f13/building/mall)
-"xDK" = (
-/obj/structure/decoration/rads,
-/turf/closed/wall/mojave/concrete,
-/area/f13/radiation)
 "xDZ" = (
 /obj/structure/table/wood,
 /obj/item/kitchen/knife{
@@ -74899,11 +75060,6 @@
 /obj/structure/flora/ausbushes/sparsegrass,
 /turf/open/indestructible/ground/outside/dirt,
 /area/f13/wasteland)
-"xOg" = (
-/obj/structure/f13/mojave_toggle_door{
-	dir = 4
-	},
-/area/f13/radiation)
 "xOh" = (
 /obj/effect/decal/cleanable/dirt/dust,
 /obj/structure/f13/mojave_prop/structure_barrels__quad_yellow_1,
@@ -75003,6 +75159,7 @@
 	id = "factory1"
 	},
 /obj/structure/f13/mojave_prop/structure_shutters__open_right_horizon_red,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xPG" = (
 /turf/open/indestructible/ground/outside/sidewalk{
@@ -75045,6 +75202,7 @@
 	dir = 4
 	},
 /obj/effect/turf_decal/vg_decals/numbers/one,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xQl" = (
 /obj/structure/flora/grass/wasteland{
@@ -75084,6 +75242,7 @@
 /obj/item/geiger_counter,
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "xRa" = (
 /obj/effect/spawner/lootdrop/f13/junkspawners,
@@ -75128,6 +75287,7 @@
 /obj/structure/table,
 /obj/item/clothing/head/f13/chinese/officer,
 /obj/item/clothing/head/f13/chinese,
+/turf/template_noop,
 /area/f13/caves)
 "xSy" = (
 /obj/effect/decal/cleanable/dirt,
@@ -75775,7 +75935,8 @@
 	dir = 4
 	},
 /obj/effect/landmark/start/f13/massfusionreactoroperator,
-/area/f13/radiation)
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
+/area/f13/building/massfusion)
 "yfA" = (
 /obj/structure/barricade/tentleathercorner{
 	dir = 1
@@ -75876,6 +76037,7 @@
 /obj/effect/turf_decal/stripes/asteroid/line{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "yhA" = (
 /turf/open/indestructible/ground/outside/sidewalk{
@@ -76063,6 +76225,7 @@
 /obj/structure/chair{
 	dir = 8
 	},
+/turf/open/floor/plating/mojave/interior/floors__concrete_big,
 /area/f13/building/massfusion)
 "ykQ" = (
 /obj/effect/decal/cleanable/dirt,
@@ -76090,6 +76253,7 @@
 /obj/structure/table,
 /obj/item/clothing/under/f13/chinese,
 /obj/item/clothing/head/f13/chinese/officer,
+/turf/template_noop,
 /area/f13/caves)
 "ymc" = (
 /obj/machinery/camera,
@@ -81747,7 +81911,7 @@ dju
 eYx
 eYx
 dju
-tVb
+dhK
 eYx
 eYx
 eYx
@@ -82291,7 +82455,7 @@ nqk
 eAD
 eAD
 eAD
-eAD
+uJV
 akB
 akB
 jKC
@@ -84094,7 +84258,7 @@ bWv
 vZX
 pgg
 kYY
-eAD
+tVb
 eAD
 ihb
 aQZ
@@ -85376,10 +85540,10 @@ riR
 joK
 aoz
 eAD
-eAD
+mLC
 akB
 akB
-eAD
+mLC
 eAD
 ean
 aQZ
@@ -124450,11 +124614,11 @@ axf
 axf
 axf
 uoG
-jBs
+bjt
 axf
 axf
 uoG
-vDl
+bjt
 uoG
 eon
 bcv
@@ -125208,20 +125372,20 @@ tWG
 aaa
 aXj
 uoG
-aby
-aby
-aby
-aby
-aby
-aby
-aby
-xDK
-xOg
-xDK
-aby
-aby
-aby
-aby
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
+adG
+bjt
+adG
+dyw
+dyw
+dyw
+dyw
 dyw
 dyw
 dyw
@@ -125465,20 +125629,20 @@ iIJ
 aae
 aXj
 aae
-aby
+dyw
 rDt
-aXI
-aXI
+dyw
+dyw
 bOE
 msN
-aXT
-ese
-dma
-ese
-laF
+oiZ
+dyw
+cBG
+dyw
+xcF
 afR
 fHL
-aby
+dyw
 aEq
 dyw
 dyw
@@ -125722,7 +125886,7 @@ iIJ
 aXj
 vcr
 aae
-aby
+dyw
 adu
 aWP
 ePK
@@ -125732,10 +125896,10 @@ yfo
 vNV
 vNV
 jTh
-ese
+dyw
 eYK
-aXT
-aby
+oiZ
+dyw
 czg
 dyw
 dyw
@@ -125977,22 +126141,22 @@ khE
 iIJ
 iIJ
 aXj
-aby
-aby
-aby
+uoG
+dyw
+dyw
 adG
 lwr
-pZn
-ese
-ese
-ese
-ese
-ese
-ese
-ese
+uAL
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
 jQx
-ese
-xDK
+dyw
+adG
 uoG
 gzj
 uoG
@@ -126234,21 +126398,21 @@ khE
 iIJ
 aae
 aXj
-aby
-ese
-ese
+uoG
+dyw
+dyw
 aik
-aXT
+oiZ
 abl
-ese
-ese
-ese
-ese
-ese
-ese
-ese
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
 lts
-ese
+dyw
 agR
 qkW
 dyw
@@ -126491,21 +126655,21 @@ khE
 iIJ
 aae
 aXj
-aby
-aaO
-aXT
+uoG
+oCx
+oiZ
 afr
-jEC
+cdl
 nvc
-fCH
-fCH
-fCH
-fCH
-fCH
-ese
-ese
+ovK
+ovK
+ovK
+ovK
+ovK
+dyw
+dyw
 oFJ
-ese
+dyw
 agR
 tEm
 dyw
@@ -126748,21 +126912,21 @@ kLQ
 iIJ
 aae
 aXj
-aby
+uoG
 adm
-aXT
+oiZ
 aik
-ese
+dyw
 nvc
-fCH
+ovK
 jBw
-fCH
+ovK
 dCd
-fCH
-ese
-ese
+ovK
+dyw
+dyw
 oFJ
-ese
+dyw
 agR
 xBl
 dyw
@@ -127005,19 +127169,19 @@ kSv
 iIJ
 aae
 aXj
-aby
-fCH
-aXT
+uoG
+ovK
+oiZ
 acQ
-aXT
+oiZ
 nvc
-fCH
-fCH
-fCH
-fCH
-fCH
-ese
-ese
+ovK
+ovK
+ovK
+ovK
+ovK
+dyw
+dyw
 oFJ
 bOE
 agR
@@ -127262,21 +127426,21 @@ mpg
 uVP
 ora
 aXj
-aby
-ese
-ese
+uoG
+dyw
+dyw
 aik
-ese
+dyw
 nvc
-ese
+dyw
 chA
-ese
-fCH
-ese
-ese
-ese
+dyw
+ovK
+dyw
+dyw
+dyw
 oFJ
-aXT
+oiZ
 agR
 dyw
 dyw
@@ -127519,26 +127683,26 @@ rVB
 lmE
 iIJ
 aXj
-aby
-aby
-aby
+uoG
+uoG
+dyw
 adG
 aXQ
-ese
-ese
-ese
-ese
+dyw
+dyw
+dyw
+dyw
 ueI
-ese
-ese
-ese
+dyw
+dyw
+dyw
 aLW
-ese
+dyw
 adG
 uoG
-vDl
+bjt
 uoG
-vDl
+bjt
 uoG
 uoG
 uoG
@@ -127778,20 +127942,20 @@ iIJ
 iIJ
 aXj
 aae
-aby
+dyw
 bmz
 afH
 eMj
 afk
 tpH
-fLx
+qtQ
 nvT
-fLx
+qtQ
 crl
-ese
-aXT
+dyw
+oiZ
 usn
-aby
+dyw
 dyw
 cdl
 uoG
@@ -128035,20 +128199,20 @@ qaf
 iIJ
 aXj
 aae
-aby
+dyw
 rDt
-aXI
-aXI
+dyw
+dyw
 bKK
 vLf
 hkO
-aXT
+oiZ
 vNV
-ese
-aXT
+dyw
+oiZ
 afe
 vjB
-aby
+dyw
 dyw
 uAL
 uoG
@@ -128292,20 +128456,20 @@ mpg
 iIJ
 aXj
 uoG
-aby
-aby
-aby
-aby
-aby
-aby
-aby
-xDK
-ese
-xDK
-aby
-aby
-aby
-aby
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
+dyw
+adG
+dyw
+adG
+dyw
+dyw
+dyw
+dyw
 dyw
 oiZ
 uoG
@@ -128822,7 +128986,7 @@ uoG
 cdl
 dyw
 dyw
-gzj
+uEc
 cdl
 dyw
 awi
@@ -129071,12 +129235,12 @@ dyw
 uoG
 axf
 axf
-jBs
+bjt
 axf
 axf
 axf
 uoG
-jBs
+bjt
 axf
 axf
 uoG
